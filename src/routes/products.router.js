@@ -1,9 +1,7 @@
 import express from "express";
 import ProductManager from "../managers/ProductManager.js";
 
-//instanciamos el router de express para manejar las rutas
 const productsRouter = express.Router();
-//instanciamos el manejador de nuestro archivo de productos
 const productManager = new ProductManager();
 
 productsRouter.get("/", async (req, res) => {

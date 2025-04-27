@@ -50,7 +50,7 @@ class CartManager {
             return JSON.parse(cartsJson);
         } catch (error) {
             if (error.code === 'ENOENT') {
-                // Si el archivo no existe, lo creamos con un array vacío
+                
                 await fs.promises.writeFile(this.path, '[]');
                 return [];
             }

@@ -17,30 +17,25 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server);
 
-//handlebars
 app.engine("handlebars", engine());
 app.set("view engine", "handlebars");
 app.set("views", path.join(__dirname, "views"));
 
-//puerto de nuestro servidor
 const PORT = 8080;
-//habilitamos poder recibir json
 app.use(express.json());
-//habilitamos la carpeta public
 app.use(express.static(path.join(__dirname, "public")));
 
-//endpoints
 app.use("/api/products", productsRouter);
 app.use("/api/carts", cartRouter);
 app.use("/", viewsRouter);
 
-//websockets
+
 const productManager = new ProductManager();
 
 io.on("connection", (socket) => {
     console.log("Nuevo usuario conectado");
 
-    // Enviar lista inicial de productos
+    
     productManager.getProducts().then(products => {
         socket.emit("products", products);
     });
@@ -48,10 +43,10 @@ io.on("connection", (socket) => {
     socket.on("newProduct", async(productData) => {
         try {
             const newProduct = await productManager.addProduct(productData);
-            // Emitir el nuevo producto individualmente
+            
             io.emit("productAdded", newProduct);
             
-            // Actualizar la lista completa
+           
             const products = await productManager.getProducts();
             io.emit("products", products);
         } catch (error) {
@@ -63,7 +58,7 @@ io.on("connection", (socket) => {
     socket.on("deleteProduct", async(id) => {
         try {
             await productManager.deleteProductById(parseInt(id));
-            // Actualizar la lista después de eliminar
+       
             const products = await productManager.getProducts();
             io.emit("products", products);
         } catch (error) {
@@ -73,7 +68,7 @@ io.on("connection", (socket) => {
     });
 });
 
-//iniciamos el servidor y escuchamos en el puerto definido
+
 server.listen(PORT, () => {
     console.log(`Servidor iniciado en: http://localhost:${PORT}`);
 });
