@@ -1,1 +1,101 @@
-[] 
+[
+  {
+    "id": 1,
+    "title": "Camiseta Argentina",
+    "description": "Camiseta oficial selección Argentina 2024",
+    "code": "ARG001",
+    "price": 45000,
+    "status": true,
+    "stock": 15,
+    "category": "camisetas",
+    "thumbnail": ""
+  },
+  {
+    "id": 2,
+    "title": "Short Barcelona",
+    "description": "Short oficial FC Barcelona temporada 2024",
+    "code": "BAR002",
+    "price": 28000,
+    "status": true,
+    "stock": 20,
+    "category": "shorts",
+    "thumbnail": ""
+  },
+  {
+    "id": 3,
+    "title": "Botines Nike Tiempo",
+    "description": "Botines profesionales para fútbol",
+    "code": "BOT003",
+    "price": 75000,
+    "status": true,
+    "stock": 8,
+    "category": "calzado",
+    "thumbnail": ""
+  },
+  {
+    "id": 4,
+    "title": "Pelota Mundial",
+    "description": "Pelota oficial Mundial 2026",
+    "code": "PEL004",
+    "price": 35000,
+    "status": true,
+    "stock": 25,
+    "category": "accesorios",
+    "thumbnail": ""
+  },
+  {
+    "id": 5,
+    "title": "Medias Deportivas",
+    "description": "Pack x3 medias deportivas profesionales",
+    "code": "MED005",
+    "price": 12000,
+    "status": true,
+    "stock": 30,
+    "category": "indumentaria",
+    "thumbnail": ""
+  },
+  {
+    "id": 6,
+    "title": "Canilleras Adidas",
+    "description": "Canilleras profesionales con protección extra",
+    "code": "CAN006",
+    "price": 18000,
+    "stock": 12,
+    "category": "protección",
+    "status": true,
+    "thumbnail": ""
+  },
+  {
+    "id": 7,
+    "title": "Guantes Arquero",
+    "description": "Guantes profesionales para arquero",
+    "code": "GUA007",
+    "price": 42000,
+    "stock": 6,
+    "category": "accesorios",
+    "status": true,
+    "thumbnail": ""
+  },
+  {
+    "id": 8,
+    "title": "Cono Entrenamiento",
+    "description": "Set x10 conos para entrenamiento",
+    "code": "CON008",
+    "price": 15000,
+    "stock": 15,
+    "category": "entrenamiento",
+    "status": true,
+    "thumbnail": ""
+  },
+  {
+    "id": 10,
+    "title": "Camiseta de Boca Juniors",
+    "description": "Camiseta del mejor equipo del mundo",
+    "code": "MartinPalermo",
+    "price": 300000,
+    "status": true,
+    "stock": 10,
+    "category": "Camisetas",
+    "thumbnails": []
+  }
+]

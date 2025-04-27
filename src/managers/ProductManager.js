@@ -1,84 +1,110 @@
 import fs from 'fs';
+import { fileURLToPath } from 'url';
+import { dirname } from 'path';
+import path from 'path';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 class ProductManager {
     constructor() {
-        this.path = './src/data/products.json';
+        this.path = path.join(__dirname, '../data/products.json');
     }
 
     getProducts = async () => {
         try {
             const productsJSON = await fs.promises.readFile(this.path, 'utf-8');
-            const products = JSON.parse(productsJSON);
-            return products;
+            return JSON.parse(productsJSON);
         } catch (error) {
-            return [];
+            if (error.code === 'ENOENT') {
+                // Si el archivo no existe, lo creamos con un array vacío
+                await fs.promises.writeFile(this.path, '[]');
+                return [];
+            }
+            throw error;
         }
     }
 
-    getProductById = async (productId) => {
-        const products = await this.getProducts();
-        const product = products.find(p => p.id === productId);
-        if (!product) {
-            throw new Error('Producto no encontrado');
+    getProductById = async (pid) => {
+        try {
+            const products = await this.getProducts();
+            const product = products.find(p => p.id === parseInt(pid));
+            if (!product) {
+                throw new Error('Producto no encontrado');
+            }
+            return product;
+        } catch (error) {
+            throw error;
         }
-        return product;
     }
 
-    addProduct = async (newProduct) => {
-        const { title, description, code, price, status, stock, category, thumbnails } = newProduct;
+    addProduct = async (productData) => {
+        try {
+            const { title, description, code, price, status, stock, category, thumbnails } = productData;
 
-        if (!title || !description || !code || !price || !stock || !category) {
-            throw new Error('Todos los campos son obligatorios');
+            if (!title || !description || !code || !price || !stock || !category) {
+                throw new Error('Todos los campos son obligatorios');
+            }
+
+            const products = await this.getProducts();
+            const id = products.length > 0 
+                ? Math.max(...products.map(p => p.id)) + 1 
+                : 1;
+
+            const product = {
+                id,
+                title,
+                description,
+                code,
+                price,
+                status: status ?? true,
+                stock,
+                category,
+                thumbnails: thumbnails ?? []
+            };
+
+            products.push(product);
+            await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
+            return product;
+        } catch (error) {
+            throw error;
         }
-
-        const products = await this.getProducts();
-        const id = products.length > 0 
-            ? Math.max(...products.map(p => p.id)) + 1 
-            : 1;
-
-        const product = {
-            id,
-            title,
-            description,
-            code,
-            price,
-            status: status ?? true,
-            stock,
-            category,
-            thumbnails: thumbnails ?? []
-        };
-
-        products.push(product);
-        await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
-        return product;
     }
 
-    updateProduct = async (id, updatedFields) => {
-        const products = await this.getProducts();
-        const index = products.findIndex(p => p.id === id);
-        
-        if (index === -1) {
-            throw new Error('Producto no encontrado');
-        }
+    setProductById = async (pid, updatedFields) => {
+        try {
+            const products = await this.getProducts();
+            const index = products.findIndex(p => p.id === parseInt(pid));
+            
+            if (index === -1) {
+                throw new Error('Producto no encontrado');
+            }
 
-        const { id: _, ...fieldsToUpdate } = updatedFields;
-        products[index] = { ...products[index], ...fieldsToUpdate };
-        
-        await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
-        return products[index];
+            const { id: _, ...fieldsToUpdate } = updatedFields;
+            products[index] = { ...products[index], ...fieldsToUpdate };
+            
+            await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
+            return products[index];
+        } catch (error) {
+            throw error;
+        }
     }
 
-    deleteProduct = async (id) => {
-        const products = await this.getProducts();
-        const index = products.findIndex(p => p.id === id);
-        
-        if (index === -1) {
-            throw new Error('Producto no encontrado');
-        }
+    deleteProductById = async (pid) => {
+        try {
+            const products = await this.getProducts();
+            const index = products.findIndex(p => p.id === parseInt(pid));
+            
+            if (index === -1) {
+                throw new Error('Producto no encontrado');
+            }
 
-        products.splice(index, 1);
-        await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
+            products.splice(index, 1);
+            await fs.promises.writeFile(this.path, JSON.stringify(products, null, 2));
+        } catch (error) {
+            throw error;
+        }
     }
 }
 
-export default ProductManager; 
+export default ProductManager;

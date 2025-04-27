@@ -1,0 +1,35 @@
+<div class="container">
+    <h1 class="text-center mb-4">Nuestros Productos</h1>
+
+    <div class="row row-cols-1 row-cols-md-3 g-4">
+        {{#each products}}
+            <div class="col">
+                <div class="card h-100">
+                    {{#if this.thumbnail}}
+                        <img src="{{this.thumbnail}}" class="card-img-top" alt="{{this.title}}">
+                    {{else}}
+                        <div class="card-img-top bg-light text-center py-5">
+                            <i class="fas fa-image fs-1 text-secondary"></i>
+                        </div>
+                    {{/if}}
+                    <div class="card-body">
+                        <h5 class="card-title">{{this.title}}</h5>
+                        <p class="card-text">{{this.description}}</p>
+                        <ul class="list-group list-group-flush mb-3">
+                            <li class="list-group-item"><strong>Precio:</strong> ${{this.price}}</li>
+                            <li class="list-group-item"><strong>Código:</strong> {{this.code}}</li>
+                            <li class="list-group-item"><strong>Stock:</strong> {{this.stock}}</li>
+                            <li class="list-group-item"><strong>Categoría:</strong> {{this.category}}</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        {{else}}
+            <div class="col-12">
+                <div class="alert alert-info" role="alert">
+                    No hay productos disponibles.
+                </div>
+            </div>
+        {{/each}}
+    </div>
+</div>
