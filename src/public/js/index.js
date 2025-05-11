@@ -3,7 +3,6 @@ const socket = io();
 const formNewProduct = document.getElementById("formNewProduct");
 const productsList = document.getElementById("productsList");
 
-// Actualizar la lista completa de productos
 socket.on("products", (products) => {
     productsList.innerHTML = products.map(product => `
         <div class="col">
@@ -13,7 +12,7 @@ socket.on("products", (products) => {
                     <p class="card-text">
                         <strong>Precio:</strong> $${product.price}
                     </p>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProduct(${product.id})">
+                    <button class="btn btn-danger btn-sm" onclick="deleteProduct('${product._id}')">
                         Eliminar
                     </button>
                 </div>
@@ -22,7 +21,6 @@ socket.on("products", (products) => {
     `).join('');
 });
 
-// Manejar el envío del formulario para nuevo producto
 formNewProduct.addEventListener("submit", (event) => {
     event.preventDefault();
 
@@ -39,12 +37,12 @@ formNewProduct.addEventListener("submit", (event) => {
     formNewProduct.reset();
 });
 
-// Función para eliminar producto
 function deleteProduct(id) {
-    socket.emit("deleteProduct", id);
+    if (confirm('¿Estás seguro de que deseas eliminar este producto?')) {
+        socket.emit("deleteProduct", id);
+    }
 }
 
-// Manejar productos agregados individualmente
 socket.on("productAdded", (newProduct) => {
     const productHtml = `
         <div class="col">
@@ -54,7 +52,7 @@ socket.on("productAdded", (newProduct) => {
                     <p class="card-text">
                         <strong>Precio:</strong> $${newProduct.price}
                     </p>
-                    <button class="btn btn-danger btn-sm" onclick="deleteProduct(${newProduct.id})">
+                    <button class="btn btn-danger btn-sm" onclick="deleteProduct('${newProduct._id}')">
                         Eliminar
                     </button>
                 </div>
@@ -65,5 +63,5 @@ socket.on("productAdded", (newProduct) => {
 });
 
 socket.on("error", (error) => {
-    alert("Error: " + error);
+    alert("Error: " + error.message || error);
 });

@@ -1,0 +1,331 @@
+<div class="container my-5">
+    <div class="row">
+        
+        <div class="col-lg-3 mb-4">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0"><i class="bi bi-funnel"></i> Filtros</h5>
+                </div>
+                <div class="card-body">
+                    <form id="filterForm" method="GET">
+                        <div class="mb-3">
+                            <label for="category" class="form-label">Categoría:</label>
+                            <select name="category" id="category" class="form-select">
+                                <option value="">Todas las categorías</option>
+                                {{#each availableFilters.categories}}
+                                    <option value="{{this}}" {{#if (eq ../appliedFilters.category this)}}selected{{/if}}>
+                                        {{capitalize this}}
+                                    </option>
+                                {{/each}}
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="sort" class="form-label">Ordenar por:</label>
+                            <select name="sort" id="sort" class="form-select">
+                                <option value="1" {{#if (eq appliedFilters.sort "1")}}selected{{/if}}>Precio: menor a mayor</option>
+                                <option value="-1" {{#if (eq appliedFilters.sort "-1")}}selected{{/if}}>Precio: mayor a menor</option>
+                                <option value="newest" {{#if (eq appliedFilters.sort "newest")}}selected{{/if}}>Más recientes</option>
+                                <option value="az" {{#if (eq appliedFilters.sort "az")}}selected{{/if}}>A-Z</option>
+                                <option value="za" {{#if (eq appliedFilters.sort "za")}}selected{{/if}}>Z-A</option>
+                            </select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="minPrice" class="form-label">Precio mínimo:</label>
+                            <input 
+                                type="number" 
+                                name="minPrice" 
+                                id="minPrice" 
+                                class="form-control" 
+                                value="{{appliedFilters.minPrice}}"
+                                min="0"
+                                step="0.01"
+                                placeholder="Min $"
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="maxPrice" class="form-label">Precio máximo:</label>
+                            <input 
+                                type="number" 
+                                name="maxPrice" 
+                                id="maxPrice" 
+                                class="form-control" 
+                                value="{{appliedFilters.maxPrice}}"
+                                min="0"
+                                step="0.01"
+                                placeholder="Max $"
+                            >
+                        </div>
+                        
+                        <div class="mb-3">
+                            <div class="form-check">
+                                <input 
+                                    class="form-check-input" 
+                                    type="checkbox" 
+                                    name="stock" 
+                                    id="stock" 
+                                    {{#if appliedFilters.stock}}checked{{/if}}
+                                >
+                                <label class="form-check-label" for="stock">
+                                    Solo productos en stock
+                                </label>
+                            </div>
+                        </div>
+                        
+                        <div class="d-grid gap-2">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-search"></i> Aplicar filtros
+                            </button>
+                            <a href="/products" class="btn btn-outline-secondary">
+                                <i class="bi bi-x-circle"></i> Limpiar filtros
+                            </a>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <div class="card shadow-sm mt-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="mb-0">Categorías populares</h5>
+                </div>
+                <div class="card-body">
+                    <div class="d-flex flex-wrap gap-2">
+                        {{#each availableFilters.categories}}
+                            <a href="/products?category={{this}}" class="badge bg-light text-dark text-decoration-none badge-category-link">
+                                {{capitalize this}}
+                            </a>
+                        {{/each}}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-lg-9">
+            <div class="d-flex justify-content-between align-items-center mb-4">
+                <h1>Nuestros productos</h1>
+                
+                <span class="badge bg-primary">{{pagination.totalDocs}} productos</span>
+            </div>
+            
+            <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4 mb-4">
+                {{#if products.length}}
+                    {{#each products}}
+                        <div class="col">
+                            <div class="card h-100">
+                                {{#if this.thumbnail}}
+                                    <img src="{{fixImageUrl this.thumbnail}}" alt="{{this.title}}" class="card-img-top" style="height: 200px; object-fit: cover;">
+                                {{else}}
+                                    <div class="bg-light text-center py-5">Sin imagen</div>
+                                {{/if}}
+                                <div class="card-body">
+                                    <span class="badge bg-secondary mb-2 badge-{{this.category}}">{{this.category}}</span>
+                                    
+                                    <h5 class="card-title">{{this.title}}</h5>
+                                    
+                                    <h6 class="card-subtitle mb-2 text-danger fw-bold">${{this.price}}</h6>
+                                    
+                                    {{#if this.description}}
+                                        <p class="card-text text-truncate">{{this.description}}</p>
+                                    {{/if}}
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mt-3">
+                                        {{#if this.stock}}
+                                            <span class="badge bg-success">Stock: {{this.stock}}</span>
+                                        {{else}}
+                                            <span class="badge bg-danger">Sin stock</span>
+                                        {{/if}}
+                                        
+                                        <span class="text-muted small">Código: {{this.code}}</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="card-footer d-flex justify-content-between bg-white">
+                                    <a href="/products/{{this._id}}" class="btn btn-sm btn-outline-primary flex-grow-1 me-1">
+                                        <i class="bi bi-eye"></i> Ver detalle
+                                    </a>
+                                    
+                                    <button class="btn btn-sm btn-success flex-grow-1 ms-1 btn-add-to-cart" data-id="{{this._id}}" {{#unless this.stock}}disabled{{/unless}}>
+                                        <i class="bi bi-cart-plus"></i> Añadir
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    {{/each}}
+                {{else}}
+                    <div class="alert alert-info text-center py-5">
+                        <i class="bi bi-exclamation-circle display-1 mb-3"></i>
+                        <h3>No se encontraron productos</h3>
+                        <p>Intente con otros criterios de búsqueda o elimine los filtros aplicados.</p>
+                    </div>
+                {{/if}}
+            </div>
+
+            {{#if pagination.totalPages}}
+                <nav class="mt-5">
+                    <ul class="pagination justify-content-center">
+                        {{#if pagination.hasPrevPage}}
+                            <li class="page-item">
+                                <a class="page-link" href="{{generatePaginationLink pagination.prevPage}}" aria-label="Anterior">
+                                    <span aria-hidden="true">&laquo;</span>
+                                </a>
+                            </li>
+                        {{else}}
+                            <li class="page-item disabled">
+                                <span class="page-link">&laquo;</span>
+                            </li>
+                        {{/if}}
+                        
+                        {{#each pagination.pageNumbers}}
+                            {{#if (eq this ../pagination.page)}}
+                                <li class="page-item active" aria-current="page">
+                                    <span class="page-link">{{this}}</span>
+                                </li>
+                            {{else}}
+                                <li class="page-item">
+                                    <a class="page-link" href="{{generatePaginationLink this}}">{{this}}</a>
+                                </li>
+                            {{/if}}
+                        {{/each}}
+                        
+                        {{#if pagination.hasNextPage}}
+                            <li class="page-item">
+                                <a class="page-link" href="{{generatePaginationLink pagination.nextPage}}" aria-label="Siguiente">
+                                    <span aria-hidden="true">&raquo;</span>
+                                </a>
+                            </li>
+                        {{else}}
+                            <li class="page-item disabled">
+                                <span class="page-link">&raquo;</span>
+                            </li>
+                        {{/if}}
+                    </ul>
+                </nav>
+            {{/if}}
+            
+            
+            <div class="mb-5 pb-5"></div>
+        </div>
+    </div>
+
+    <div id="floating-cart-button" style="display: none;">
+        <a href="#" id="cart-link" class="btn btn-primary shadow">
+            <i class="bi bi-cart3"></i>
+            <span class="badge bg-danger" id="cart-count">0</span>
+        </a>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        document.querySelectorAll('.card-img-top').forEach(img => {
+            img.onerror = function() {
+                
+                const category = this.closest('.card').querySelector('.badge').textContent.toLowerCase();
+                this.src = getPlaceholderByCategory(category);
+                this.onerror = null; 
+            };
+        });
+
+        const cartId = localStorage.getItem('cartId');
+        if (cartId) {
+            fetchCartCount(cartId);
+        }
+
+        document.querySelectorAll('.btn-add-to-cart').forEach(button => {
+            button.addEventListener('click', async function() {
+                const productId = this.dataset.id;
+                
+                try {
+                    
+                    let cartId = localStorage.getItem('cartId');
+                    
+                    if (!cartId) {
+                        
+                        const response = await fetch('/api/carts', { method: 'POST' });
+                        const data = await response.json();
+                        cartId = data.payload._id;
+                        localStorage.setItem('cartId', cartId);
+                    }
+
+                    const response = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ quantity: 1 })
+                    });
+                    
+                    if (response.ok) {
+                        showToast('Producto agregado al carrito', 'success');
+                        fetchCartCount(cartId);
+                    } else {
+                        showToast('Error al agregar al carrito', 'danger');
+                    }
+                } catch (error) {
+                    console.error(error);
+                    showToast('Error al procesar la solicitud', 'danger');
+                }
+            });
+        });
+    });
+    
+    async function fetchCartCount(cartId) {
+        try {
+            const response = await fetch(`/api/carts/${cartId}`);
+            const data = await response.json();
+            
+            if (response.ok && data.payload && data.payload.products) {
+                
+                const totalItems = data.payload.products.reduce((sum, item) => sum + item.quantity, 0);
+
+                document.getElementById('cart-count').textContent = totalItems;
+
+                document.getElementById('floating-cart-button').style.display = 'block';
+
+                document.getElementById('cart-link').href = `/carts/${cartId}`;
+            }
+        } catch (error) {
+            console.error(error);
+        }
+    }
+    
+    function getPlaceholderByCategory(category) {
+        const placeholders = {
+            'camisetas': 'https://via.placeholder.com/300x200/007bff/ffffff?text=Camiseta+Deportiva',
+            'shorts': 'https://via.placeholder.com/300x200/6610f2/ffffff?text=Shorts+Deportivos',
+            'calzado': 'https://via.placeholder.com/300x200/d63384/ffffff?text=Calzado+Deportivo',
+            'accesorios': 'https://via.placeholder.com/300x200/fd7e14/ffffff?text=Accesorios',
+            'protección': 'https://via.placeholder.com/300x200/dc3545/ffffff?text=Protección',
+            'entrenamiento': 'https://via.placeholder.com/300x200/198754/ffffff?text=Entrenamiento', 
+            'indumentaria': 'https://via.placeholder.com/300x200/20c997/ffffff?text=Indumentaria',
+            'conjuntos': 'https://via.placeholder.com/300x200/0dcaf0/ffffff?text=Conjuntos'
+        };
+        
+        return placeholders[category] || 'https://via.placeholder.com/300x200/6c757d/ffffff?text=Producto+Deportivo';
+    }
+    
+    function showToast(message, type = 'success') {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'notification-toast';
+        
+        toastContainer.innerHTML = `
+            <div class="toast show align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            toastContainer.remove();
+        }, 3000);
+    }
+</script>

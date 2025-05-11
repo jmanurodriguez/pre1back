@@ -1,0 +1,265 @@
+<div class="container my-5">
+    <nav aria-label="breadcrumb" class="mb-4">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="/">Inicio</a></li>
+            <li class="breadcrumb-item"><a href="/products">Productos</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{product.title}}</li>
+        </ol>
+    </nav>
+
+    <div class="row">
+        
+        <div class="col-lg-6 mb-4">
+            <div class="card border-0 shadow-sm">
+                {{#if product.thumbnail}}
+                    <img src="{{fixImageUrl product.thumbnail}}" class="card-img-top img-fluid" alt="{{product.title}}" id="product-image">
+                {{else}}
+                    <div class="bg-light text-center py-5" style="height: 400px;">
+                        <i class="bi bi-image text-secondary" style="font-size: 5rem;"></i>
+                        <p class="mt-3">Sin imagen disponible</p>
+                    </div>
+                {{/if}}
+            </div>
+        </div>
+
+        <div class="col-lg-6">
+            <span class="badge bg-primary mb-2">{{product.category}}</span>
+            <h1 class="mb-3">{{product.title}}</h1>
+            <div class="d-flex align-items-center mb-3">
+                <span class="text-muted me-3">Código: {{product.code}}</span>
+                {{#if product.stock}}
+                    <span class="badge bg-success">Disponible: {{product.stock}} unidades</span>
+                {{else}}
+                    <span class="badge bg-danger">Agotado</span>
+                {{/if}}
+            </div>
+
+            <h2 class="text-danger mb-4">${{product.price}}</h2>
+            
+            <div class="mb-4">
+                <h5>Descripción</h5>
+                <p class="text-muted">{{product.description}}</p>
+            </div>
+            
+            {{#if product.tags.length}}
+                <div class="mb-4">
+                    <h5>Características</h5>
+                    <div class="d-flex flex-wrap gap-2">
+                        {{#each product.tags}}
+                            <span class="badge bg-light text-dark">{{this}}</span>
+                        {{/each}}
+                    </div>
+                </div>
+            {{/if}}
+
+            <div class="card bg-light border-0 mb-4">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <div class="input-group" style="max-width: 150px;">
+                            <button class="btn btn-outline-secondary" type="button" id="quantity-minus">-</button>
+                            <input type="number" class="form-control text-center" id="quantity" value="1" min="1" max="{{product.stock}}">
+                            <button class="btn btn-outline-secondary" type="button" id="quantity-plus">+</button>
+                        </div>
+                        <span class="text-muted">Máximo: {{product.stock}} unidades</span>
+                    </div>
+                    
+                    <button class="btn btn-primary w-100 btn-add-to-cart" {{#unless product.stock}}disabled{{/unless}} data-id="{{product._id}}">
+                        <i class="bi bi-cart-plus"></i> Agregar al carrito
+                    </button>
+                </div>
+            </div>
+            
+            <div class="d-flex justify-content-between">
+                <a href="/products" class="btn btn-outline-secondary">
+                    <i class="bi bi-arrow-left"></i> Volver a productos
+                </a>
+                
+                <a href="#related-products" class="btn btn-link">Ver productos relacionados</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="related-products" class="mt-5 pt-3">
+        <h3 class="mb-4">Productos relacionados</h3>
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-4 g-4">
+            {{#each relatedProducts}}
+                <div class="col">
+                    <div class="card h-100">
+                        {{#if this.thumbnail}}
+                            <img src="{{fixImageUrl this.thumbnail}}" alt="{{this.title}}" class="card-img-top" style="height: 150px; object-fit: cover;">
+                        {{else}}
+                            <div class="bg-light text-center py-4">
+                                <i class="bi bi-image text-secondary"></i>
+                            </div>
+                        {{/if}}
+                        <div class="card-body">
+                            <h5 class="card-title">{{this.title}}</h5>
+                            <p class="card-text text-danger">${{this.price}}</p>
+                        </div>
+                        <div class="card-footer bg-white">
+                            <a href="/products/{{this._id}}" class="btn btn-sm btn-outline-primary w-100">Ver detalle</a>
+                        </div>
+                    </div>
+                </div>
+            {{/each}}
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const quantityInput = document.getElementById('quantity');
+        const minusBtn = document.getElementById('quantity-minus');
+        const plusBtn = document.getElementById('quantity-plus');
+        const maxStock = {{product.stock}};
+        
+        minusBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue > 1) {
+                quantityInput.value = currentValue - 1;
+            }
+        });
+        
+        plusBtn.addEventListener('click', function() {
+            const currentValue = parseInt(quantityInput.value);
+            if (currentValue < maxStock) {
+                quantityInput.value = currentValue + 1;
+            }
+        });
+        
+        quantityInput.addEventListener('change', function() {
+            let value = parseInt(this.value);
+            if (isNaN(value) || value < 1) {
+                this.value = 1;
+            } else if (value > maxStock) {
+                this.value = maxStock;
+            }
+        });
+
+        const productImage = document.getElementById('product-image');
+        if (productImage) {
+            productImage.onerror = function() {
+                this.src = 'https://via.placeholder.com/600x400/6c757d/ffffff?text=Producto+Deportivo';
+                this.onerror = null;
+            };
+        }
+
+        document.querySelector('.btn-add-to-cart')?.addEventListener('click', async function() {
+            if (this.disabled) return;
+            
+            const productId = this.dataset.id;
+            const quantity = parseInt(document.getElementById('quantity').value);
+            
+            try {
+                
+                let cartId = localStorage.getItem('cartId');
+                
+                if (!cartId) {
+                    
+                    const response = await fetch('/api/carts', { method: 'POST' });
+                    const data = await response.json();
+                    cartId = data.payload._id;
+                    localStorage.setItem('cartId', cartId);
+                }
+
+                const response = await fetch(`/api/carts/${cartId}/product/${productId}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ quantity: quantity })
+                });
+                
+                if (response.ok) {
+                    showToast(`${quantity} unidad(es) agregadas al carrito`, 'success');
+
+                    updateCartBadge(cartId);
+
+                    showCartButton(cartId);
+                } else {
+                    showToast('Error al agregar al carrito', 'danger');
+                }
+            } catch (error) {
+                console.error(error);
+                showToast('Error al procesar la solicitud', 'danger');
+            }
+        });
+    });
+    
+    function updateCartBadge(cartId) {
+        fetch(`/api/carts/${cartId}`)
+            .then(response => response.json())
+            .then(data => {
+                if (data.payload && data.payload.products) {
+                    const totalItems = data.payload.products.reduce((sum, item) => sum + item.quantity, 0);
+                    const cartBadge = document.getElementById('cart-badge');
+                    
+                    if (cartBadge) {
+                        cartBadge.textContent = totalItems;
+                        cartBadge.style.display = 'inline-block';
+                    }
+                }
+            })
+            .catch(error => console.error('Error al actualizar el badge del carrito:', error));
+    }
+    
+    function showCartButton(cartId) {
+        const cartButtonContainer = document.createElement('div');
+        cartButtonContainer.className = 'position-fixed bottom-0 end-0 p-3';
+        cartButtonContainer.style.zIndex = '1050';
+        
+        cartButtonContainer.innerHTML = `
+            <div class="toast show align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ¡Producto agregado al carrito!
+                    </div>
+                    <div class="me-2 m-auto">
+                        <a href="/carts/${cartId}" class="btn btn-sm btn-light ms-2">Ver carrito</a>
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2" data-bs-dismiss="toast"></button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(cartButtonContainer);
+
+        setTimeout(() => {
+            cartButtonContainer.remove();
+        }, 5000);
+    }
+    
+    function showToast(message, type = 'success') {
+        const toastContainer = document.createElement('div');
+        toastContainer.className = 'position-fixed top-0 end-0 p-3';
+        toastContainer.style.zIndex = '1050';
+        
+        toastContainer.innerHTML = `
+            <div class="toast show align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="toast-body">
+                        ${message}
+                    </div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                </div>
+            </div>
+        `;
+        
+        document.body.appendChild(toastContainer);
+        
+        setTimeout(() => {
+            toastContainer.remove();
+        }, 3000);
+    }
+</script>
+
+<style>
+    .card {
+        transition: transform 0.3s ease-in-out;
+    }
+    
+    .card:hover {
+        transform: translateY(-5px);
+    }
+</style>

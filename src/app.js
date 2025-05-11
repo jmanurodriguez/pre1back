@@ -1,74 +1,120 @@
-import express from "express";
-import productsRouter from "./routes/products.router.js";
-import cartRouter from "./routes/cart.router.js";
-import viewsRouter from "./routes/views.router.js";
-import { engine } from "express-handlebars";
-import { Server } from "socket.io";
-import http from "http";
-import ProductManager from "./managers/ProductManager.js";
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import express from 'express';
+import { Server } from 'socket.io';
+import handlebars from 'express-handlebars';
 import path from 'path';
+import { fileURLToPath } from 'url';
+import productsRouter from './routes/products.router.js';
+import cartRouter from './routes/cart.router.js';
+import viewsRouter from './routes/views.router.js';
+import Product from './models/product.model.js';
+import connectDB from './config/database.js';
+import { registerHandlebarsHelpers, multiply, calculateTotal, eq, range } from './utils/handlebars-helpers.js';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+const __dirname = path.dirname(__filename);
 
 const app = express();
-const server = http.createServer(app);
-const io = new Server(server);
+const PORT = process.env.PORT || 8080;
 
-app.engine("handlebars", engine());
-app.set("view engine", "handlebars");
-app.set("views", path.join(__dirname, "views"));
-
-const PORT = 8080;
 app.use(express.json());
-app.use(express.static(path.join(__dirname, "public")));
+app.use(express.urlencoded({ extended: true }));
 
-app.use("/api/products", productsRouter);
-app.use("/api/carts", cartRouter);
-app.use("/", viewsRouter);
+const hbs = handlebars.create({
+    helpers: {
+        multiply,
+        calculateTotal,
+        eq,
+        range
+    }
+});
 
+registerHandlebarsHelpers(hbs);
 
-const productManager = new ProductManager();
+app.engine('handlebars', hbs.engine);
+app.set('views', path.join(__dirname, 'views'));
+app.set('view engine', 'handlebars');
 
-io.on("connection", (socket) => {
-    console.log("Nuevo usuario conectado");
+app.use(express.static(path.join(__dirname, 'public')));
 
-    
-    productManager.getProducts().then(products => {
-        socket.emit("products", products);
-    });
+connectDB();
 
-    socket.on("newProduct", async(productData) => {
+app.use('/api/products', productsRouter);
+app.use('/api/carts', cartRouter);
+app.use('/', viewsRouter);
+
+const httpServer = app.listen(PORT, () => {
+    console.log(`Servidor corriendo en puerto ${PORT}`);
+});
+
+const io = new Server(httpServer);
+
+io.on('connection', (socket) => {
+    console.log('Nuevo cliente conectado');
+
+    Product.paginate({}, { page: 1, limit: 100, lean: true })
+        .then(result => {
+            socket.emit('products', result.docs);
+        }).catch(error => {
+            console.error("Error al obtener productos:", error);
+        });
+
+    socket.on('newProduct', async (productData) => {
         try {
-            const newProduct = await productManager.addProduct(productData);
             
-            io.emit("productAdded", newProduct);
-            
-           
-            const products = await productManager.getProducts();
-            io.emit("products", products);
+            if (!productData.title || !productData.description || !productData.code || 
+                !productData.price || !productData.stock || !productData.category) {
+                socket.emit('error', { message: 'Todos los campos son obligatorios' });
+                return;
+            }
+
+            const existingProduct = await Product.findOne({ code: productData.code });
+            if (existingProduct) {
+                socket.emit('error', { message: `Ya existe un producto con el código ${productData.code}` });
+                return;
+            }
+
+            const newProduct = new Product({
+                title: productData.title,
+                description: productData.description,
+                code: productData.code,
+                price: productData.price,
+                status: productData.status ?? true,
+                stock: productData.stock,
+                category: productData.category,
+                thumbnails: productData.thumbnails ?? []
+            });
+
+            await newProduct.save();
+
+            const result = await Product.paginate({}, { page: 1, limit: 100, lean: true });
+
+            io.emit('products', result.docs);
         } catch (error) {
-            socket.emit("error", error.message);
-            console.error("Error al añadir el producto:", error);
+            console.error("Error al agregar producto:", error);
+            socket.emit('error', { message: error.message });
         }
     });
 
-    socket.on("deleteProduct", async(id) => {
+    socket.on('deleteProduct', async (id) => {
         try {
-            await productManager.deleteProductById(parseInt(id));
-       
-            const products = await productManager.getProducts();
-            io.emit("products", products);
+            const deletedProduct = await Product.findByIdAndDelete(id);
+            
+            if (!deletedProduct) {
+                socket.emit('error', { message: 'Producto no encontrado' });
+                return;
+            }
+
+            const result = await Product.paginate({}, { page: 1, limit: 100, lean: true });
+
+            io.emit('products', result.docs);
         } catch (error) {
-            socket.emit("error", error.message);
-            console.error("Error al eliminar el producto:", error);
+            console.error("Error al eliminar producto:", error);
+            socket.emit('error', { message: error.message });
         }
     });
 });
 
-
-server.listen(PORT, () => {
-    console.log(`Servidor iniciado en: http://localhost:${PORT}`);
-});
+export default app;

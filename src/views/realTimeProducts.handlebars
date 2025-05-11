@@ -1,55 +1,359 @@
-<div class="container">
-    <h1 class="text-center mb-4">Agregar Producto</h1>
+<div class="container my-5">
+    <div class="row">
+        <div class="col-md-12 mb-4">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1>Administración de Productos</h1>
+                <a href="/products" class="btn btn-outline-primary">
+                    <i class="bi bi-arrow-left"></i> Volver a Tienda
+                </a>
+            </div>
+        </div>
+    </div>
 
     <div class="row">
         <div class="col-md-4 mb-4">
-            <div class="card">
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="card-title h5 mb-0"><i class="bi bi-plus-circle"></i> Agregar Nuevo Producto</h2>
+                </div>
                 <div class="card-body">
-                    <h2 class="card-title h5 mb-3">Agregar Nuevo Producto</h2>
                     <form id="formNewProduct">
                         <div class="mb-3">
-                            <input type="text" class="form-control" name="title" placeholder="Ingrese el título" required>
+                            <label for="title" class="form-label">Título</label>
+                            <input type="text" class="form-control" id="title" name="title" placeholder="Nombre del producto" required>
                         </div>
                         <div class="mb-3">
-                            <input type="text" class="form-control" name="description" placeholder="Ingrese la descripción" required>
+                            <label for="description" class="form-label">Descripción</label>
+                            <textarea class="form-control" id="description" name="description" rows="2" placeholder="Descripción del producto" required></textarea>
+                        </div>
+                        <div class="row">
+                            <div class="col-md-6 mb-3">
+                                <label for="price" class="form-label">Precio</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">$</span>
+                                    <input type="number" class="form-control" id="price" name="price" min="0" step="0.01" placeholder="0.00" required>
+                                </div>
+                            </div>
+                            <div class="col-md-6 mb-3">
+                                <label for="stock" class="form-label">Stock</label>
+                                <input type="number" class="form-control" id="stock" name="stock" min="0" placeholder="0" required>
+                            </div>
                         </div>
                         <div class="mb-3">
-                            <input type="text" class="form-control" name="code" placeholder="Ingrese el código" required>
+                            <label for="code" class="form-label">Código</label>
+                            <input type="text" class="form-control" id="code" name="code" placeholder="Código único del producto" required>
                         </div>
                         <div class="mb-3">
-                            <input type="number" class="form-control" name="price" placeholder="Ingrese el precio" required>
+                            <label for="category" class="form-label">Categoría</label>
+                            <select class="form-select" id="category" name="category" required>
+                                <option value="" selected disabled>Seleccione una categoría</option>
+                                <option value="camisetas">Camisetas</option>
+                                <option value="shorts">Shorts</option>
+                                <option value="calzado">Calzado</option>
+                                <option value="accesorios">Accesorios</option>
+                                <option value="protección">Protección</option>
+                                <option value="entrenamiento">Entrenamiento</option>
+                                <option value="indumentaria">Indumentaria</option>
+                                <option value="conjuntos">Conjuntos</option>
+                            </select>
                         </div>
                         <div class="mb-3">
-                            <input type="number" class="form-control" name="stock" placeholder="Ingrese el stock" required>
+                            <label for="thumbnail" class="form-label">URL de Imagen</label>
+                            <input type="url" class="form-control" id="thumbnail" name="thumbnail" placeholder="https://ejemplo.com/imagen.jpg">
                         </div>
-                        <div class="mb-3">
-                            <input type="text" class="form-control" name="category" placeholder="Ingrese la categoría" required>
+                        <div class="d-grid">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="bi bi-plus-circle"></i> Agregar Producto
+                            </button>
                         </div>
-                        <button type="submit" class="btn btn-primary w-100">Agregar Producto</button>
                     </form>
                 </div>
             </div>
         </div>
 
         <div class="col-md-8">
-            <h2 class="h4 mb-3">Lista de Productos</h2>
-            <div class="row row-cols-1 row-cols-md-2 g-4" id="productsList">
-                {{#each products}}
-                    <div class="col">
-                        <div class="card h-100">
-                            <div class="card-body">
-                                <h5 class="card-title">{{this.title}}</h5>
-                                <p class="card-text">
-                                    <strong>Precio:</strong> ${{this.price}}
-                                </p>
-                                <button class="btn btn-danger btn-sm" onclick="deleteProduct({{this.id}})">
-                                    Eliminar
-                                </button>
-                            </div>
-                        </div>
+            <div class="card shadow-sm">
+                <div class="card-header bg-primary text-white">
+                    <h2 class="card-title h5 mb-0"><i class="bi bi-list-ul"></i> Lista de Productos</h2>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover mb-0">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Imagen</th>
+                                    <th>Título</th>
+                                    <th>Categoría</th>
+                                    <th>Precio</th>
+                                    <th>Stock</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody id="productsTable">
+                                {{#each products}}
+                                <tr data-id="{{this._id}}">
+                                    <td class="text-center">
+                                        {{#if this.thumbnail}}
+                                            <img src="{{this.thumbnail}}" alt="{{this.title}}" class="img-thumbnail" style="width: 50px; height: 50px; object-fit: cover;">
+                                        {{else}}
+                                            <div class="bg-light text-center" style="width: 50px; height: 50px; line-height: 50px; font-size: 20px;">
+                                                <i class="bi bi-image"></i>
+                                            </div>
+                                        {{/if}}
+                                    </td>
+                                    <td>{{this.title}}</td>
+                                    <td>{{this.category}}</td>
+                                    <td>${{this.price}}</td>
+                                    <td>{{this.stock}}</td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm" role="group">
+                                            <button type="button" class="btn btn-warning edit-product" data-id="{{this._id}}">
+                                                <i class="bi bi-pencil"></i>
+                                            </button>
+                                            <button type="button" class="btn btn-danger delete-product" data-id="{{this._id}}">
+                                                <i class="bi bi-trash"></i>
+                                            </button>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {{/each}}
+                            </tbody>
+                        </table>
                     </div>
-                {{/each}}
+                </div>
             </div>
         </div>
     </div>
 </div>
+
+
+<div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-dark">
+                <h5 class="modal-title"><i class="bi bi-pencil"></i> Editar Producto</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editProductForm">
+                    <input type="hidden" id="editProductId">
+                    <div class="mb-3">
+                        <label for="editTitle" class="form-label">Título</label>
+                        <input type="text" class="form-control" id="editTitle" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDescription" class="form-label">Descripción</label>
+                        <textarea class="form-control" id="editDescription" name="description" rows="2" required></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="editPrice" class="form-label">Precio</label>
+                            <div class="input-group">
+                                <span class="input-group-text">$</span>
+                                <input type="number" class="form-control" id="editPrice" name="price" min="0" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="editStock" class="form-label">Stock</label>
+                            <input type="number" class="form-control" id="editStock" name="stock" min="0" required>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCode" class="form-label">Código</label>
+                        <input type="text" class="form-control" id="editCode" name="code" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editCategory" class="form-label">Categoría</label>
+                        <select class="form-select" id="editCategory" name="category" required>
+                            <option value="camisetas">Camisetas</option>
+                            <option value="shorts">Shorts</option>
+                            <option value="calzado">Calzado</option>
+                            <option value="accesorios">Accesorios</option>
+                            <option value="protección">Protección</option>
+                            <option value="entrenamiento">Entrenamiento</option>
+                            <option value="indumentaria">Indumentaria</option>
+                            <option value="conjuntos">Conjuntos</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editThumbnail" class="form-label">URL de Imagen</label>
+                        <input type="url" class="form-control" id="editThumbnail" name="thumbnail">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
+                <button type="button" class="btn btn-warning" id="saveProductChanges">Guardar cambios</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        
+        const formNewProduct = document.getElementById('formNewProduct');
+        formNewProduct.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            try {
+                const formData = new FormData(formNewProduct);
+                const productData = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    code: formData.get('code'),
+                    price: parseFloat(formData.get('price')),
+                    stock: parseInt(formData.get('stock')),
+                    category: formData.get('category'),
+                    thumbnails: formData.get('thumbnail') ? [formData.get('thumbnail')] : []
+                };
+                
+                const response = await fetch('/api/products', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                const result = await response.json();
+                
+                if (response.ok) {
+                    showToast('Producto agregado correctamente', 'success');
+                    formNewProduct.reset();
+                    
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    showToast(`Error: ${result.message}`, 'danger');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error al procesar la solicitud', 'danger');
+            }
+        });
+
+        document.querySelectorAll('.delete-product').forEach(button => {
+            button.addEventListener('click', async function() {
+                const productId = this.getAttribute('data-id');
+                
+                if (confirm('¿Está seguro de que desea eliminar este producto?')) {
+                    try {
+                        const response = await fetch(`/api/products/${productId}`, {
+                            method: 'DELETE'
+                        });
+                        
+                        if (response.ok) {
+                            
+                            const row = document.querySelector(`tr[data-id="${productId}"]`);
+                            if (row) {
+                                row.remove();
+                            }
+                            showToast('Producto eliminado correctamente', 'success');
+                        } else {
+                            const result = await response.json();
+                            showToast(`Error: ${result.message}`, 'danger');
+                        }
+                    } catch (error) {
+                        console.error('Error:', error);
+                        showToast('Error al procesar la solicitud', 'danger');
+                    }
+                }
+            });
+        });
+
+        const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
+        
+        document.querySelectorAll('.edit-product').forEach(button => {
+            button.addEventListener('click', async function() {
+                const productId = this.getAttribute('data-id');
+                
+                try {
+                    const response = await fetch(`/api/products/${productId}`);
+                    const result = await response.json();
+                    
+                    if (response.ok) {
+                        const product = result.payload;
+
+                        document.getElementById('editProductId').value = product._id;
+                        document.getElementById('editTitle').value = product.title;
+                        document.getElementById('editDescription').value = product.description;
+                        document.getElementById('editPrice').value = product.price;
+                        document.getElementById('editStock').value = product.stock;
+                        document.getElementById('editCode').value = product.code;
+                        document.getElementById('editCategory').value = product.category;
+                        document.getElementById('editThumbnail').value = product.thumbnail || '';
+
+                        editProductModal.show();
+                    } else {
+                        showToast(`Error: ${result.message}`, 'danger');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    showToast('Error al procesar la solicitud', 'danger');
+                }
+            });
+        });
+
+        document.getElementById('saveProductChanges').addEventListener('click', async function() {
+            const productId = document.getElementById('editProductId').value;
+            const editForm = document.getElementById('editProductForm');
+            const formData = new FormData(editForm);
+            
+            const productData = {
+                title: formData.get('title'),
+                description: formData.get('description'),
+                code: formData.get('code'),
+                price: parseFloat(formData.get('price')),
+                stock: parseInt(formData.get('stock')),
+                category: formData.get('category'),
+                thumbnail: formData.get('thumbnail') || undefined
+            };
+            
+            try {
+                const response = await fetch(`/api/products/${productId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(productData)
+                });
+                
+                if (response.ok) {
+                    editProductModal.hide();
+                    showToast('Producto actualizado correctamente', 'success');
+                    
+                    setTimeout(() => window.location.reload(), 1000);
+                } else {
+                    const result = await response.json();
+                    showToast(`Error: ${result.message}`, 'danger');
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                showToast('Error al procesar la solicitud', 'danger');
+            }
+        });
+        
+        function showToast(message, type = 'success') {
+            const toastContainer = document.createElement('div');
+            toastContainer.className = 'notification-toast';
+            
+            toastContainer.innerHTML = `
+                <div class="toast show align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="toast-body">
+                            ${message}
+                        </div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(toastContainer);
+            
+            setTimeout(() => {
+                toastContainer.remove();
+            }, 3000);
+        }
+    });
+</script>
