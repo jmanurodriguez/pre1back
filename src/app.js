@@ -3,11 +3,16 @@ import { Server } from 'socket.io';
 import handlebars from 'express-handlebars';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import cookieParser from 'cookie-parser';
+import passport from 'passport';
 import productsRouter from './routes/products.router.js';
 import cartRouter from './routes/cart.router.js';
 import viewsRouter from './routes/views.router.js';
+import sessionsRouter from './routes/sessions.router.js';
+import usersRouter from './routes/users.router.js';
 import Product from './models/product.model.js';
 import connectDB from './config/database.js';
+import initializePassport from './config/passport.config.js';
 import { registerHandlebarsHelpers, multiply, calculateTotal, eq, range } from './utils/handlebars-helpers.js';
 import * as dotenv from 'dotenv';
 
@@ -19,8 +24,13 @@ const __dirname = path.dirname(__filename);
 const app = express();
 const PORT = process.env.PORT || 8080;
 
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+
+initializePassport();
+app.use(passport.initialize());
 
 const hbs = handlebars.create({
     helpers: {
@@ -43,10 +53,35 @@ connectDB();
 
 app.use('/api/products', productsRouter);
 app.use('/api/carts', cartRouter);
+app.use('/api/sessions', sessionsRouter);
+app.use('/api/users', usersRouter);
+
 app.use('/', viewsRouter);
+
+app.use('*', (req, res) => {
+    res.status(404).json({ 
+        status: 'error', 
+        message: 'Ruta no encontrada' 
+    });
+});
+    
+app.use((err, req, res, next) => {
+    console.error('Error no manejado:', err);
+    res.status(500).json({ 
+        status: 'error', 
+        message: 'Error interno del servidor' 
+    });
+});
 
 const httpServer = app.listen(PORT, () => {
     console.log(`Servidor corriendo en puerto ${PORT}`);
+    console.log(`Rutas disponibles:`);
+    console.log(`- GET  /api/products - Obtener productos`);
+    console.log(`- GET  /api/carts - Obtener carritos`);
+    console.log(`- POST /api/sessions/register - Registrar usuario`);
+    console.log(`- POST /api/sessions/login - Iniciar sesión`);
+    console.log(`- GET  /api/sessions/current - Usuario actual (protegida)`);
+    console.log(`- GET  /api/users - CRUD usuarios (admin)`);
 });
 
 const io = new Server(httpServer);
@@ -63,8 +98,8 @@ io.on('connection', (socket) => {
 
     socket.on('newProduct', async (productData) => {
         try {
-            
-            if (!productData.title || !productData.description || !productData.code || 
+
+            if (!productData.title || !productData.description || !productData.code ||
                 !productData.price || !productData.stock || !productData.category) {
                 socket.emit('error', { message: 'Todos los campos son obligatorios' });
                 return;
@@ -101,7 +136,7 @@ io.on('connection', (socket) => {
     socket.on('deleteProduct', async (id) => {
         try {
             const deletedProduct = await Product.findByIdAndDelete(id);
-            
+
             if (!deletedProduct) {
                 socket.emit('error', { message: 'Producto no encontrado' });
                 return;

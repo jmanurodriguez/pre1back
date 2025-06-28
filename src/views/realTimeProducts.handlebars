@@ -126,7 +126,6 @@
     </div>
 </div>
 
-
 <div class="modal fade" id="editProductModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog">
         <div class="modal-content">
@@ -191,11 +190,11 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         const formNewProduct = document.getElementById('formNewProduct');
         formNewProduct.addEventListener('submit', async function(e) {
             e.preventDefault();
-            
+
             try {
                 const formData = new FormData(formNewProduct);
                 const productData = {
@@ -207,7 +206,7 @@
                     category: formData.get('category'),
                     thumbnails: formData.get('thumbnail') ? [formData.get('thumbnail')] : []
                 };
-                
+
                 const response = await fetch('/api/products', {
                     method: 'POST',
                     headers: {
@@ -215,18 +214,18 @@
                     },
                     body: JSON.stringify(productData)
                 });
-                
+
                 const result = await response.json();
-                
+
                 if (response.ok) {
                     showToast('Producto agregado correctamente', 'success');
                     formNewProduct.reset();
-                    
+
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
                     showToast(`Error: ${result.message}`, 'danger');
                 }
-                
+
             } catch (error) {
                 console.error('Error:', error);
                 showToast('Error al procesar la solicitud', 'danger');
@@ -236,15 +235,15 @@
         document.querySelectorAll('.delete-product').forEach(button => {
             button.addEventListener('click', async function() {
                 const productId = this.getAttribute('data-id');
-                
+
                 if (confirm('¿Está seguro de que desea eliminar este producto?')) {
                     try {
                         const response = await fetch(`/api/products/${productId}`, {
                             method: 'DELETE'
                         });
-                        
+
                         if (response.ok) {
-                            
+
                             const row = document.querySelector(`tr[data-id="${productId}"]`);
                             if (row) {
                                 row.remove();
@@ -263,15 +262,15 @@
         });
 
         const editProductModal = new bootstrap.Modal(document.getElementById('editProductModal'));
-        
+
         document.querySelectorAll('.edit-product').forEach(button => {
             button.addEventListener('click', async function() {
                 const productId = this.getAttribute('data-id');
-                
+
                 try {
                     const response = await fetch(`/api/products/${productId}`);
                     const result = await response.json();
-                    
+
                     if (response.ok) {
                         const product = result.payload;
 
@@ -299,7 +298,7 @@
             const productId = document.getElementById('editProductId').value;
             const editForm = document.getElementById('editProductForm');
             const formData = new FormData(editForm);
-            
+
             const productData = {
                 title: formData.get('title'),
                 description: formData.get('description'),
@@ -309,7 +308,7 @@
                 category: formData.get('category'),
                 thumbnail: formData.get('thumbnail') || undefined
             };
-            
+
             try {
                 const response = await fetch(`/api/products/${productId}`, {
                     method: 'PUT',
@@ -318,11 +317,11 @@
                     },
                     body: JSON.stringify(productData)
                 });
-                
+
                 if (response.ok) {
                     editProductModal.hide();
                     showToast('Producto actualizado correctamente', 'success');
-                    
+
                     setTimeout(() => window.location.reload(), 1000);
                 } else {
                     const result = await response.json();
@@ -333,11 +332,11 @@
                 showToast('Error al procesar la solicitud', 'danger');
             }
         });
-        
+
         function showToast(message, type = 'success') {
             const toastContainer = document.createElement('div');
             toastContainer.className = 'notification-toast';
-            
+
             toastContainer.innerHTML = `
                 <div class="toast show align-items-center text-white bg-${type} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                     <div class="d-flex">
@@ -348,9 +347,9 @@
                     </div>
                 </div>
             `;
-            
+
             document.body.appendChild(toastContainer);
-            
+
             setTimeout(() => {
                 toastContainer.remove();
             }, 3000);

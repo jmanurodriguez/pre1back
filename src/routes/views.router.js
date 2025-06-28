@@ -11,7 +11,7 @@ router.get('/', async (req, res) => {
             limit: 10,
             lean: true
         };
-        
+
         const result = await Product.paginate({}, options);
         res.render('home', { products: result.docs });
     } catch (error) {
@@ -24,19 +24,19 @@ router.get('/products', async (req, res) => {
         const { page = 1, limit = 10, sort, category, minPrice, maxPrice, stock } = req.query;
 
         const filter = {};
-        
+
         if (category) {
             filter.category = category;
         }
-        
+
         if (minPrice) {
             filter.price = { ...filter.price, $gte: parseFloat(minPrice) };
         }
-        
+
         if (maxPrice) {
             filter.price = { ...filter.price, $lte: parseFloat(maxPrice) };
         }
-        
+
         if (stock === 'on') {
             filter.stock = { $gt: 0 };
         }
@@ -70,15 +70,15 @@ router.get('/products', async (req, res) => {
         const maxPagesToShow = 5;
         let startPage = Math.max(currentPage - Math.floor(maxPagesToShow / 2), 1);
         let endPage = Math.min(startPage + maxPagesToShow - 1, totalPages);
-        
+
         if (endPage - startPage + 1 < maxPagesToShow) {
             startPage = Math.max(endPage - maxPagesToShow + 1, 1);
         }
-        
+
         for (let i = startPage; i <= endPage; i++) {
             pageNumbers.push(i);
         }
-        
+
         res.render('products', {
             products: result.docs,
             pagination: {
@@ -113,16 +113,16 @@ router.get('/products/:pid', async (req, res) => {
     try {
         const { pid } = req.params;
         const product = await Product.findById(pid).lean();
-        
+
         if (!product) {
             return res.status(404).render('error', { error: 'Producto no encontrado' });
         }
 
         const relatedProducts = await Product.find({
             category: product.category,
-            _id: { $ne: product._id } 
+            _id: { $ne: product._id }
         }).limit(4).lean();
-        
+
         res.render('product-detail', { product, relatedProducts });
     } catch (error) {
         res.status(404).render('error', { error: error.message });
@@ -133,11 +133,11 @@ router.get('/carts/:cid', async (req, res) => {
     try {
         const { cid } = req.params;
         const cart = await Cart.findById(cid).populate('products.product').lean();
-        
+
         if (!cart) {
             return res.status(404).render('error', { error: 'Carrito no encontrado' });
         }
-        
+
         res.render('cart', { cart });
     } catch (error) {
         res.status(404).render('error', { error: error.message });

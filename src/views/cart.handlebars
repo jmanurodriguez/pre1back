@@ -68,7 +68,7 @@
                                 <i class="bi bi-arrow-left"></i> Seguir comprando
                             </a>
                         </div>
-                        
+
                         <div class="alert alert-info">
                             <i class="bi bi-info-circle"></i> Los precios y la disponibilidad de los productos están sujetos a cambios.
                         </div>
@@ -124,7 +124,7 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         document.querySelectorAll('.quantity-btn').forEach(button => {
             button.addEventListener('click', async function() {
                 const productId = this.dataset.productId;
@@ -132,7 +132,7 @@
                 const inputElement = this.parentElement.querySelector('.quantity-input');
                 const currentValue = parseInt(inputElement.value);
                 const cartId = inputElement.dataset.cartId;
-                
+
                 let newValue = currentValue;
                 if (action === 'decrease' && currentValue > 1) {
                     newValue = currentValue - 1;
@@ -142,7 +142,7 @@
                         newValue = currentValue + 1;
                     }
                 }
-                
+
                 if (newValue !== currentValue) {
                     inputElement.value = newValue;
                     await updateProductQuantity(cartId, productId, newValue);
@@ -164,7 +164,7 @@
                     value = max;
                     this.value = max;
                 }
-                
+
                 await updateProductQuantity(cartId, productId, value);
             });
         });
@@ -174,14 +174,14 @@
                 if (confirm('¿Estás seguro de que deseas eliminar este producto del carrito?')) {
                     const productId = this.dataset.productId;
                     const cartId = this.dataset.cartId;
-                    
+
                     try {
                         const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
                             method: 'DELETE'
                         });
-                        
+
                         if (response.ok) {
-                            
+
                             location.reload();
                         } else {
                             showToast('Error al eliminar el producto', 'danger');
@@ -197,14 +197,14 @@
         document.getElementById('empty-cart')?.addEventListener('click', async function() {
             if (confirm('¿Estás seguro de que deseas vaciar todo el carrito?')) {
                 const cartId = this.dataset.cartId;
-                
+
                 try {
                     const response = await fetch(`/api/carts/${cartId}`, {
                         method: 'DELETE'
                     });
-                    
+
                     if (response.ok) {
-                        
+
                         location.reload();
                     } else {
                         showToast('Error al vaciar el carrito', 'danger');
@@ -228,7 +228,7 @@
             };
         });
     });
-    
+
     async function updateProductQuantity(cartId, productId, quantity) {
         try {
             const response = await fetch(`/api/carts/${cartId}/products/${productId}`, {
@@ -238,9 +238,9 @@
                 },
                 body: JSON.stringify({ quantity })
             });
-            
+
             if (response.ok) {
-                
+
                 location.reload();
             } else {
                 showToast('Error al actualizar la cantidad', 'danger');
@@ -250,7 +250,7 @@
             showToast('Error al procesar la solicitud', 'danger');
         }
     }
-    
+
     function getPlaceholderByCategory(category) {
         const placeholders = {
             'camisetas': 'https://via.placeholder.com/80x80/007bff/ffffff?text=C',
@@ -258,19 +258,19 @@
             'calzado': 'https://via.placeholder.com/80x80/d63384/ffffff?text=C',
             'accesorios': 'https://via.placeholder.com/80x80/fd7e14/ffffff?text=A',
             'protección': 'https://via.placeholder.com/80x80/dc3545/ffffff?text=P',
-            'entrenamiento': 'https://via.placeholder.com/80x80/198754/ffffff?text=E', 
+            'entrenamiento': 'https://via.placeholder.com/80x80/198754/ffffff?text=E',
             'indumentaria': 'https://via.placeholder.com/80x80/20c997/ffffff?text=I',
             'conjuntos': 'https://via.placeholder.com/80x80/0dcaf0/ffffff?text=C'
         };
-        
+
         return placeholders[category] || 'https://via.placeholder.com/80x80/6c757d/ffffff?text=?';
     }
-    
+
     function showToast(message, type = 'success') {
         const toastContainer = document.createElement('div');
         toastContainer.className = 'position-fixed top-0 end-0 p-3';
         toastContainer.style.zIndex = '1050';
-        
+
         toastContainer.innerHTML = `
             <div class="toast show align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -281,9 +281,9 @@
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(toastContainer);
-        
+
         setTimeout(() => {
             toastContainer.remove();
         }, 3000);
@@ -294,15 +294,15 @@
     .card {
         transition: box-shadow 0.3s ease-in-out;
     }
-    
+
     .card:hover {
         box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15)!important;
     }
-    
+
     .btn {
         transition: transform 0.2s;
     }
-    
+
     .btn:active {
         transform: scale(0.95);
     }

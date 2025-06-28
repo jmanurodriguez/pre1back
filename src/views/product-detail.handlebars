@@ -8,7 +8,7 @@
     </nav>
 
     <div class="row">
-        
+
         <div class="col-lg-6 mb-4">
             <div class="card border-0 shadow-sm">
                 {{#if product.thumbnail}}
@@ -35,12 +35,12 @@
             </div>
 
             <h2 class="text-danger mb-4">${{product.price}}</h2>
-            
+
             <div class="mb-4">
                 <h5>Descripción</h5>
                 <p class="text-muted">{{product.description}}</p>
             </div>
-            
+
             {{#if product.tags.length}}
                 <div class="mb-4">
                     <h5>Características</h5>
@@ -62,18 +62,18 @@
                         </div>
                         <span class="text-muted">Máximo: {{product.stock}} unidades</span>
                     </div>
-                    
+
                     <button class="btn btn-primary w-100 btn-add-to-cart" {{#unless product.stock}}disabled{{/unless}} data-id="{{product._id}}">
                         <i class="bi bi-cart-plus"></i> Agregar al carrito
                     </button>
                 </div>
             </div>
-            
+
             <div class="d-flex justify-content-between">
                 <a href="/products" class="btn btn-outline-secondary">
                     <i class="bi bi-arrow-left"></i> Volver a productos
                 </a>
-                
+
                 <a href="#related-products" class="btn btn-link">Ver productos relacionados</a>
             </div>
         </div>
@@ -108,26 +108,26 @@
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
-        
+
         const quantityInput = document.getElementById('quantity');
         const minusBtn = document.getElementById('quantity-minus');
         const plusBtn = document.getElementById('quantity-plus');
         const maxStock = {{product.stock}};
-        
+
         minusBtn.addEventListener('click', function() {
             const currentValue = parseInt(quantityInput.value);
             if (currentValue > 1) {
                 quantityInput.value = currentValue - 1;
             }
         });
-        
+
         plusBtn.addEventListener('click', function() {
             const currentValue = parseInt(quantityInput.value);
             if (currentValue < maxStock) {
                 quantityInput.value = currentValue + 1;
             }
         });
-        
+
         quantityInput.addEventListener('change', function() {
             let value = parseInt(this.value);
             if (isNaN(value) || value < 1) {
@@ -147,16 +147,16 @@
 
         document.querySelector('.btn-add-to-cart')?.addEventListener('click', async function() {
             if (this.disabled) return;
-            
+
             const productId = this.dataset.id;
             const quantity = parseInt(document.getElementById('quantity').value);
-            
+
             try {
-                
+
                 let cartId = localStorage.getItem('cartId');
-                
+
                 if (!cartId) {
-                    
+
                     const response = await fetch('/api/carts', { method: 'POST' });
                     const data = await response.json();
                     cartId = data.payload._id;
@@ -170,7 +170,7 @@
                     },
                     body: JSON.stringify({ quantity: quantity })
                 });
-                
+
                 if (response.ok) {
                     showToast(`${quantity} unidad(es) agregadas al carrito`, 'success');
 
@@ -186,7 +186,7 @@
             }
         });
     });
-    
+
     function updateCartBadge(cartId) {
         fetch(`/api/carts/${cartId}`)
             .then(response => response.json())
@@ -194,7 +194,7 @@
                 if (data.payload && data.payload.products) {
                     const totalItems = data.payload.products.reduce((sum, item) => sum + item.quantity, 0);
                     const cartBadge = document.getElementById('cart-badge');
-                    
+
                     if (cartBadge) {
                         cartBadge.textContent = totalItems;
                         cartBadge.style.display = 'inline-block';
@@ -203,12 +203,12 @@
             })
             .catch(error => console.error('Error al actualizar el badge del carrito:', error));
     }
-    
+
     function showCartButton(cartId) {
         const cartButtonContainer = document.createElement('div');
         cartButtonContainer.className = 'position-fixed bottom-0 end-0 p-3';
         cartButtonContainer.style.zIndex = '1050';
-        
+
         cartButtonContainer.innerHTML = `
             <div class="toast show align-items-center text-white bg-success" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -222,19 +222,19 @@
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(cartButtonContainer);
 
         setTimeout(() => {
             cartButtonContainer.remove();
         }, 5000);
     }
-    
+
     function showToast(message, type = 'success') {
         const toastContainer = document.createElement('div');
         toastContainer.className = 'position-fixed top-0 end-0 p-3';
         toastContainer.style.zIndex = '1050';
-        
+
         toastContainer.innerHTML = `
             <div class="toast show align-items-center text-white bg-${type}" role="alert" aria-live="assertive" aria-atomic="true">
                 <div class="d-flex">
@@ -245,9 +245,9 @@
                 </div>
             </div>
         `;
-        
+
         document.body.appendChild(toastContainer);
-        
+
         setTimeout(() => {
             toastContainer.remove();
         }, 3000);
@@ -258,7 +258,7 @@
     .card {
         transition: transform 0.3s ease-in-out;
     }
-    
+
     .card:hover {
         transform: translateY(-5px);
     }

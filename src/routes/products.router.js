@@ -8,11 +8,11 @@ router.get('/', async (req, res) => {
         const { limit = 10, page = 1, sort, category, status } = req.query;
 
         const filter = {};
-        
+
         if (category) {
             filter.category = category;
         }
-        
+
         if (status !== undefined) {
             filter.status = status === 'true';
         }
@@ -28,7 +28,7 @@ router.get('/', async (req, res) => {
         }
 
         const result = await Product.paginate(filter, options);
-        
+
         res.json({
             status: 'success',
             payload: result.docs,
@@ -50,11 +50,11 @@ router.get('/:pid', async (req, res) => {
     try {
         const { pid } = req.params;
         const product = await Product.findById(pid);
-        
+
         if (!product) {
             return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
         }
-        
+
         res.json({ status: 'success', payload: product });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });
@@ -96,17 +96,17 @@ router.put('/:pid', async (req, res) => {
     try {
         const { pid } = req.params;
         const { id: _, ...update } = req.body;
-        
+
         const updatedProduct = await Product.findByIdAndUpdate(
             pid,
             update,
             { new: true, runValidators: true }
         );
-        
+
         if (!updatedProduct) {
             return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
         }
-        
+
         res.json({ status: 'success', payload: updatedProduct });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });
@@ -117,11 +117,11 @@ router.delete('/:pid', async (req, res) => {
     try {
         const { pid } = req.params;
         const deletedProduct = await Product.findByIdAndDelete(pid);
-        
+
         if (!deletedProduct) {
             return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
         }
-        
+
         res.json({ status: 'success', message: 'Producto eliminado correctamente' });
     } catch (error) {
         res.status(500).json({ status: 'error', message: error.message });

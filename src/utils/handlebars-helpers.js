@@ -11,25 +11,25 @@ export const eq = (a, b) => {
 };
 
 export const range = (start, end) => {
-    
+
     if (end - start > 10) {
         if (start < 5) {
-            
+
             return Array.from({ length: 7 }, (_, i) => i + 1).concat(['...', end]);
         } else if (end - start < 5) {
-            
+
             return [1, '...'].concat(Array.from({ length: 7 }, (_, i) => end - 6 + i));
         } else {
-            
+
             return [1, '...'].concat(Array.from({ length: 5 }, (_, i) => start - 2 + i)).concat(['...', end]);
         }
     }
-    
+
     return Array.from({ length: end - start + 1 }, (_, i) => start + i);
 };
 
 export const registerHandlebarsHelpers = (handlebars) => {
-    
+
     handlebars.handlebars.registerHelper('eq', function(a, b) {
         return a === b;
     });
@@ -46,9 +46,9 @@ export const registerHandlebarsHelpers = (handlebars) => {
             return url;
         }
 
-        if (url.startsWith('assets.adidas.com') || 
-            url.indexOf('.com') > -1 || 
-            url.indexOf('.org') > -1 || 
+        if (url.startsWith('assets.adidas.com') ||
+            url.indexOf('.com') > -1 ||
+            url.indexOf('.org') > -1 ||
             url.indexOf('.net') > -1) {
             return `https://${url}`;
         }
@@ -57,13 +57,13 @@ export const registerHandlebarsHelpers = (handlebars) => {
     });
 
     handlebars.handlebars.registerHelper('generatePaginationLink', function(page) {
-        
+
         const params = new URLSearchParams();
 
         params.set('page', page);
 
         const data = this.hash ? this.hash.data.root : this;
-        
+
         if (data.appliedFilters) {
             if (data.appliedFilters.category) params.set('category', data.appliedFilters.category);
             if (data.appliedFilters.sort) params.set('sort', data.appliedFilters.sort);
@@ -71,7 +71,7 @@ export const registerHandlebarsHelpers = (handlebars) => {
             if (data.appliedFilters.maxPrice) params.set('maxPrice', data.appliedFilters.maxPrice);
             if (data.appliedFilters.stock) params.set('stock', 'on');
         }
-        
+
         return `/products?${params.toString()}`;
     });
 
@@ -81,21 +81,21 @@ export const registerHandlebarsHelpers = (handlebars) => {
 
     handlebars.handlebars.registerHelper('calculateTotal', function(products) {
         if (!products || !products.length) return '0.00';
-        
+
         const total = products.reduce((sum, item) => {
             const price = item.product?.price || 0;
             const quantity = item.quantity || 0;
             return sum + (price * quantity);
         }, 0);
-        
+
         return total.toFixed(2);
     });
 
     handlebars.handlebars.registerHelper('formatDate', function(date) {
         if (!date) return '';
-        const options = { 
-            year: 'numeric', 
-            month: 'long', 
+        const options = {
+            year: 'numeric',
+            month: 'long',
             day: 'numeric',
             hour: '2-digit',
             minute: '2-digit'

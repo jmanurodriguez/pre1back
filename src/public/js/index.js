@@ -28,8 +28,8 @@ formNewProduct.addEventListener("submit", (event) => {
     const productData = {};
 
     formData.forEach((value, key) => {
-        productData[key] = key === 'price' || key === 'stock' 
-            ? Number(value) 
+        productData[key] = key === 'price' || key === 'stock'
+            ? Number(value)
             : value;
     });
 
