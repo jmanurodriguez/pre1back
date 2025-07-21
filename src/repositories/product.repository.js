@@ -8,10 +8,8 @@ class ProductRepository {
 
   async createProduct(productData) {
     try {
-      // Validaciones de negocio
       this.validateProductData(productData);
-      
-      // Verificar que el código no exista
+
       const existingProduct = await this.productDAO.findByCode(productData.code);
       if (existingProduct) {
         throw new Error('Ya existe un producto con ese código');
@@ -70,13 +68,11 @@ class ProductRepository {
 
   async updateProduct(id, updateData) {
     try {
-      // Validar que el producto existe
       const existingProduct = await this.productDAO.findById(id);
       if (!existingProduct) {
         throw new Error('Producto no encontrado');
       }
 
-      // Si se actualiza el código, verificar que no exista
       if (updateData.code && updateData.code !== existingProduct.code) {
         const codeExists = await this.productDAO.findByCode(updateData.code);
         if (codeExists) {
@@ -84,7 +80,6 @@ class ProductRepository {
         }
       }
 
-      // Validar datos de actualización
       this.validateUpdateData(updateData);
 
       const product = await this.productDAO.update(id, updateData);
@@ -219,7 +214,6 @@ class ProductRepository {
     }
   }
 
-  // Validaciones privadas
   validateProductData(data) {
     if (!data.title) throw new Error('El título es requerido');
     if (!data.description) throw new Error('La descripción es requerida');

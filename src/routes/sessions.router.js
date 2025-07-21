@@ -5,6 +5,7 @@ import User from '../models/user.model.js';
 import { isValidEmail } from '../utils/auth.js';
 import UserRepository from '../repositories/user.repository.js';
 import AuthService from '../services/auth.service.js';
+import { authenticateCurrent } from '../middlewares/auth.js';
 
 const router = Router();
 const userRepository = new UserRepository();
@@ -108,9 +109,9 @@ router.post('/login', (req, res, next) => {
                     email: user.email,
                     age: user.age,
                     role: user.role,
-                    cart: user.cart
-                },
-                token: token
+                    cart: user.cart,
+                    token: token
+                }
             });
         } catch (error) {
             console.error('Error generando JWT:', error);
@@ -122,7 +123,7 @@ router.post('/login', (req, res, next) => {
     })(req, res, next);
 });
 
-router.get('/current', passport.authenticate('jwt', { session: false }), async (req, res) => {
+router.get('/current', authenticateCurrent, async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ 

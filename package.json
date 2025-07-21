@@ -7,7 +7,7 @@
   "scripts": {
     "start": "node src/app.js",
     "dev": "nodemon src/app.js",
-    "test": "node src/tests/auth-test.js"
+    "test": "node src/tests/auth-test-clean.js"
   },
   "dependencies": {
     "bcrypt": "^5.1.0",

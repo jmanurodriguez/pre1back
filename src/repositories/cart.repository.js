@@ -32,7 +32,6 @@ class CartRepository {
 
   async addProductToCart(cartId, productId, quantity = 1) {
     try {
-      // Validar que el producto existe y está disponible
       const product = await this.productDAO.findById(productId);
       if (!product) {
         throw new Error('Producto no encontrado');
@@ -46,13 +45,11 @@ class CartRepository {
         throw new Error(`Stock insuficiente. Disponible: ${product.stock}`);
       }
 
-      // Obtener carrito actual
       const currentCart = await this.cartDAO.findById(cartId);
       if (!currentCart) {
         throw new Error('Carrito no encontrado');
       }
 
-      // Verificar si el producto ya está en el carrito
       const existingProduct = currentCart.products.find(
         item => item.product.toString() === productId.toString()
       );
@@ -64,7 +61,6 @@ class CartRepository {
         throw new Error(`Stock insuficiente. Disponible: ${product.stock}, solicitado: ${totalQuantity}`);
       }
 
-      // Agregar producto al carrito
       const updatedCart = await this.cartDAO.addProduct(cartId, productId, quantity);
       const populatedCart = await this.cartDAO.findById(cartId);
       
@@ -85,7 +81,6 @@ class CartRepository {
         return await this.removeProductFromCart(cartId, productId);
       }
 
-      // Verificar stock disponible
       const product = await this.productDAO.findById(productId);
       if (!product) {
         throw new Error('Producto no encontrado');
@@ -170,11 +165,9 @@ class CartRepository {
         throw new Error('No hay productos válidos para procesar la compra');
       }
 
-      // Calcular total de productos válidos
       const validProducts = CartDTO.getTicketProductsResponse(validationResult.validProducts);
       const total = validProducts.reduce((sum, item) => sum + item.subtotal, 0);
 
-      // Productos que no se pudieron procesar
       const failedProducts = validationResult.invalidProducts.length > 0 ? 
         CartDTO.getUnavailableProductsResponse(validationResult.invalidProducts) : [];
 

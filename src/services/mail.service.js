@@ -5,10 +5,10 @@ dotenv.config();
 
 class MailService {
   constructor() {
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: process.env.MAIL_HOST || 'smtp.gmail.com',
       port: process.env.MAIL_PORT || 587,
-      secure: false, // true para puerto 465, false para otros puertos
+      secure: false,
       auth: {
         user: process.env.MAIL_USER,
         pass: process.env.MAIL_PASSWORD
@@ -62,7 +62,6 @@ class MailService {
       };
     } catch (error) {
       console.error('Error al enviar email de bienvenida:', error);
-      // No lanzar error para no interrumpir el registro
       return {
         success: false,
         error: error.message
@@ -120,7 +119,6 @@ class MailService {
     }
   }
 
-  // Template para email de recuperación de contraseña
   getPasswordResetTemplate(userName, resetUrl, token) {
     return `
     <!DOCTYPE html>
@@ -152,7 +150,7 @@ class MailService {
                 <a href="${resetUrl}" class="button">Restablecer Contraseña</a>
                 
                 <div class="warning">
-                    <strong>⚠️ Importante:</strong>
+                    <strong>IMPORTANTE:</strong>
                     <ul>
                         <li>Este enlace expirará en <strong>1 hora</strong></li>
                         <li>Solo puedes usar este enlace una vez</li>
@@ -176,7 +174,6 @@ class MailService {
     </html>`;
   }
 
-  // Template para email de bienvenida
   getWelcomeTemplate(userName) {
     return `
     <!DOCTYPE html>
@@ -218,7 +215,6 @@ class MailService {
     </html>`;
   }
 
-  // Template para confirmación de compra
   getPurchaseConfirmationTemplate(userName, ticket) {
     const productsHtml = ticket.products.map(item => `
         <tr>
@@ -290,7 +286,6 @@ class MailService {
     </html>`;
   }
 
-  // Template para notificación de cambio de contraseña
   getPasswordChangeTemplate(userName) {
     return `
     <!DOCTYPE html>
@@ -328,10 +323,10 @@ class MailService {
   async testConnection() {
     try {
       await this.transporter.verify();
-      console.log('✅ Conexión de email configurada correctamente');
+      console.log('SUCCESS: Conexión de email configurada correctamente');
       return true;
     } catch (error) {
-      console.error('❌ Error en configuración de email:', error.message);
+      console.error('ERROR: Error en configuración de email:', error.message);
       return false;
     }
   }

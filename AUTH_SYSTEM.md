@@ -1,40 +1,43 @@
-# 🔐 Sistema de Autenticación y Gestión de Usuarios
+# Sistema de Autenticación y Gestión de Usuarios
 
-## 📋 Resumen
+## Resumen
 
 Este proyecto implementa un sistema completo de autenticación y gestión de usuarios con las siguientes características:
 
-- ✅ **CRUD de usuarios** completo
-- ✅ **Sistema de autenticación JWT** con Passport.js
-- ✅ **Protección de rutas privadas**
-- ✅ **Persistencia en MongoDB** usando Mongoose
-- ✅ **Encriptación de contraseñas** con bcrypt
-- ✅ **Estrategias Local y JWT** de Passport
-- ✅ **Middleware de autorización** por roles
-- ✅ **Validaciones robustas**
+- **CRUD de usuarios** completo con paginación
+- **Sistema de autenticación JWT** con Passport.js
+- **Protección de rutas privadas** por roles
+- **Persistencia en MongoDB** usando Mongoose
+- **Encriptación de contraseñas** con bcrypt
+- **Estrategias Local y JWT** de Passport
+- **Middleware de autorización** por roles específicos
+- **Sistema de recuperación** de contraseña por email
+- **Validaciones robustas** en todas las capas
 
-## 🚀 Endpoints Implementados
+## Endpoints Implementados
 
-### 🔐 Autenticación (`/api/sessions`)
-
-| Método | Endpoint | Descripción | Protegida |
-|--------|----------|-------------|-----------|
-| POST | `/api/sessions/register` | Registro de usuarios | ❌ |
-| POST | `/api/sessions/login` | Inicio de sesión | ❌ |
-| GET | `/api/sessions/current` | Usuario autenticado | ✅ JWT |
-| GET | `/api/sessions/profile` | Perfil del usuario | ✅ JWT |
-| POST | `/api/sessions/logout` | Cerrar sesión | ❌ |
-
-### 👥 Gestión de Usuarios (`/api/users`) - Solo Admin
+### Autenticación (`/api/sessions`)
 
 | Método | Endpoint | Descripción | Protegida |
 |--------|----------|-------------|-----------|
-| GET | `/api/users` | Listar usuarios (paginado) | ✅ Admin |
-| GET | `/api/users/:uid` | Obtener usuario por ID | ✅ Admin |
-| PUT | `/api/users/:uid` | Actualizar usuario | ✅ Admin |
-| DELETE | `/api/users/:uid` | Eliminar usuario | ✅ Admin |
+| POST | `/api/sessions/register` | Registro de usuarios | No |
+| POST | `/api/sessions/login` | Inicio de sesión | No |
+| GET | `/api/sessions/current` | Usuario autenticado | JWT |
+| GET | `/api/sessions/profile` | Perfil del usuario | JWT |
+| POST | `/api/sessions/logout` | Cerrar sesión | No |
+| POST | `/api/sessions/forgot-password` | Recuperar contraseña | No |
+| POST | `/api/sessions/reset-password` | Restablecer contraseña | Token |
 
-## 📊 Modelo de Usuario
+### Gestión de Usuarios (`/api/users`) - Solo Admin
+
+| Método | Endpoint | Descripción | Protegida |
+|--------|----------|-------------|-----------|
+| GET | `/api/users` | Listar usuarios (paginado) | Admin |
+| GET | `/api/users/:uid` | Obtener usuario por ID | Admin |
+| PUT | `/api/users/:uid` | Actualizar usuario | Admin |
+| DELETE | `/api/users/:uid` | Eliminar usuario | Admin |
+
+## Modelo de Usuario
 
 ```javascript
 {
@@ -44,13 +47,8 @@ Este proyecto implementa un sistema completo de autenticación y gestión de usu
     type: String,
     unique: true,
     required: true
-  },
-  age: Number,                 
-  password: String,            
-  cart: {                      
-    type: ObjectId,
-    ref: "Cart"
-  },
+  resetPasswordToken: String,      # Token para recuperación de contraseña
+  resetPasswordExpires: Date,       # Expiración del token (1 hora)
   role: {                       
     type: String,
     enum: ['user', 'admin'],
@@ -59,7 +57,7 @@ Este proyecto implementa un sistema completo de autenticación y gestión de usu
 }
 ```
 
-## 🔧 Ejemplos de Uso
+## Ejemplos de Uso y Datos de Prueba
 
 ### 1. Registro de Usuario
 
@@ -270,4 +268,186 @@ await User.findOneAndUpdate(
   { role: "admin" }
 );
 ```
+
+## Datos de Prueba y Testing
+
+### Usuarios de Prueba Sugeridos
+
+#### Usuario Regular
+```json
+{
+  "first_name": "Juan",
+  "last_name": "Pérez",
+  "email": "usuario@test.com",
+  "age": 25,
+  "password": "password123"
+}
+```
+
+#### Usuario Administrador
+```json
+{
+  "first_name": "Admin",
+  "last_name": "Sistema",
+  "email": "admin@test.com",
+  "age": 30,
+  "password": "admin123"
+}
+```
+
+### Productos de Prueba
+
+```json
+[
+  {
+    "title": "Smartphone Samsung Galaxy",
+    "description": "Teléfono inteligente de última generación",
+    "code": "PHONE001",
+    "price": 599.99,
+    "stock": 50,
+    "category": "Electrónicos",
+    "thumbnails": ["phone1.jpg", "phone2.jpg"]
+  },
+  {
+    "title": "Laptop HP Pavilion",
+    "description": "Laptop para trabajo y entretenimiento",
+    "code": "LAPTOP001",
+    "price": 799.99,
+    "stock": 25,
+    "category": "Computadoras",
+    "thumbnails": ["laptop1.jpg"]
+  },
+  {
+    "title": "Auriculares Sony WH-1000XM4",
+    "description": "Auriculares con cancelación de ruido",
+    "code": "AUDIO001",
+    "price": 299.99,
+    "stock": 75,
+    "category": "Audio",
+    "thumbnails": ["headphones1.jpg"]
+  }
+]
+```
+
+### Secuencia de Pruebas Recomendada
+
+#### 1. Registro y Autenticación
+```bash
+# Registrar usuario regular
+POST /api/sessions/register
+{
+  "first_name": "Juan",
+  "last_name": "Pérez",
+  "email": "usuario@test.com",
+  "age": 25,
+  "password": "password123"
+}
+
+# Iniciar sesión
+POST /api/sessions/login
+{
+  "email": "usuario@test.com",
+  "password": "password123"
+}
+
+# Verificar token JWT en respuesta y usarlo en header:
+# Authorization: Bearer <token>
+```
+
+#### 2. Gestión de Productos (requiere admin)
+```bash
+# Crear producto
+POST /api/products
+Authorization: Bearer <admin_token>
+{
+  "title": "Producto Test",
+  "description": "Descripción del producto",
+  "code": "TEST001",
+  "price": 99.99,
+  "stock": 10,
+  "category": "Test"
+}
+
+# Listar productos (público)
+GET /api/products?page=1&limit=10
+```
+
+#### 3. Gestión de Carrito
+```bash
+# Crear carrito
+POST /api/carts
+Authorization: Bearer <user_token>
+
+# Agregar producto al carrito
+POST /api/carts/:cid/product/:pid
+Authorization: Bearer <user_token>
+{
+  "quantity": 2
+}
+
+# Procesar compra
+POST /api/carts/:cid/purchase
+Authorization: Bearer <user_token>
+```
+
+#### 4. Recuperación de Contraseña
+```bash
+# Solicitar recuperación
+POST /api/sessions/forgot-password
+{
+  "email": "usuario@test.com"
+}
+
+# Restablecer con token (del email)
+POST /api/sessions/reset-password
+{
+  "token": "abc123def456",
+  "newPassword": "nuevaPassword123"
+}
+```
+
+### Variables de Entorno para Testing
+
+```env
+# Base de datos de testing
+MONGO_URI=mongodb+srv://test:test@cluster.mongodb.net/ecommerce_test
+
+# JWT para testing (cambiar en producción)
+JWT_SECRET=test_jwt_secret_key_12345
+
+# Email de testing (usar Gmail de prueba)
+MAIL_USER=test.ecommerce@gmail.com
+MAIL_PASSWORD=app_password_gmail
+```
+
+### Comandos de Testing
+
+```bash
+# Ejecutar todos los tests
+npm test
+
+# Test específicos (si se implementan)
+npm run test:auth
+npm run test:products
+npm run test:cart
+```
+
+### Herramientas de Testing Recomendadas
+
+1. **Postman/Insomnia**: Para probar endpoints manualmente
+2. **MongoDB Compass**: Para verificar datos en la base
+3. **VS Code REST Client**: Con archivos `.http` para requests
+4. **Node.js scripts**: Para poblar datos de prueba
+
+### Colección Postman
+
+Se recomienda crear una colección con:
+- Variables de entorno para `baseURL` y `authToken`
+- Requests pre-configurados para todos los endpoints
+- Tests automáticos en cada request
+- Workflows para casos de uso completos
+
+---
+
+**Nota**: Recuerda cambiar todas las credenciales y secretos antes de desplegar en producción.
 

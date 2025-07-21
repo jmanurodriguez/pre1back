@@ -16,35 +16,35 @@ const testServices = async () => {
     const userRepository = new UserRepository();
 
     try {
-        console.log('1. 📧 Probando conexión de email...');
+        console.log('1. Probando conexión de email...');
         const emailTest = await mailService.testConnection();
-        console.log(emailTest ? '✅ Email configurado correctamente' : '❌ Error en configuración de email');
+        console.log(emailTest ? 'SUCCESS: Email configurado correctamente' : 'ERROR: Error en configuración de email');
 
-        console.log('\n2. 🛍️ Probando ProductRepository...');
+        console.log('\n2. Probando ProductRepository...');
         const categories = await productRepository.getCategories();
-        console.log(`✅ Categorías obtenidas: ${categories.length}`);
+        console.log(`SUCCESS: Categorías obtenidas: ${categories.length}`);
 
-        console.log('\n3. 🛒 Probando CartRepository...');
+        console.log('\n3. Probando CartRepository...');
         const newCart = await cartRepository.createCart();
-        console.log(`✅ Carrito creado: ${newCart.id}`);
+        console.log(`SUCCESS: Carrito creado: ${newCart.id}`);
 
-        console.log('\n4. 🎫 Probando TicketRepository...');
+        console.log('\n4. Probando TicketRepository...');
         const stats = await ticketRepository.getTicketStats();
-        console.log(`✅ Estadísticas de tickets obtenidas`);
+        console.log(`SUCCESS: Estadísticas de tickets obtenidas`);
 
-        console.log('\n5. 👤 Probando UserRepository...');
+        console.log('\n5. Probando UserRepository...');
         const users = await userRepository.getAllUsers({ limit: 1 });
-        console.log(`✅ Usuarios obtenidos: ${users.users.length}`);
+        console.log(`SUCCESS: Usuarios obtenidos: ${users.users.length}`);
 
-        console.log('\n🎉 Todas las pruebas completadas exitosamente!');
+        console.log('\nTodas las pruebas completadas exitosamente!');
 
     } catch (error) {
-        console.error('❌ Error en las pruebas:', error.message);
+        console.error('ERROR: Error en las pruebas:', error.message);
     }
 };
 
 const testEmailTemplates = async () => {
-    console.log('📧 Probando templates de email...\n');
+    console.log('Probando templates de email...\n');
     
     const mailService = new MailService();
     
@@ -70,29 +70,29 @@ const testEmailTemplates = async () => {
             `http://localhost:8080/reset-password?token=${mockToken}`, 
             mockToken
         );
-        console.log('✅ Template de reset generado');
+        console.log('SUCCESS: Template de reset generado');
 
         console.log('2. Template de bienvenida');
         const welcomeTemplate = mailService.getWelcomeTemplate(mockUserName);
-        console.log('✅ Template de bienvenida generado');
+        console.log('SUCCESS: Template de bienvenida generado');
 
         console.log('3. Template de confirmación de compra');
         const purchaseTemplate = mailService.getPurchaseConfirmationTemplate(mockUserName, mockTicket);
-        console.log('✅ Template de confirmación generado');
+        console.log('SUCCESS: Template de confirmación generado');
 
         console.log('4. Template de cambio de contraseña');
         const changeTemplate = mailService.getPasswordChangeTemplate(mockUserName);
-        console.log('✅ Template de cambio generado');
+        console.log('SUCCESS: Template de cambio generado');
 
-        console.log('\n🎉 Todos los templates generados correctamente!');
+        console.log('\nTodos los templates generados correctamente!');
 
     } catch (error) {
-        console.error('❌ Error generando templates:', error.message);
+        console.error('ERROR: Error generando templates:', error.message);
     }
 };
 
 const displayNewEndpoints = () => {
-    console.log('\n🚀 NUEVOS ENDPOINTS DISPONIBLES:\n');
+    console.log('\nNUEVOS ENDPOINTS DISPONIBLES:\n');
     
     console.log('📧 AUTENTICACIÓN Y RECUPERACIÓN:');
     console.log('- POST /api/sessions/forgot-password');

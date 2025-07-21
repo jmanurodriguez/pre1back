@@ -8,15 +8,12 @@ class TicketRepository {
 
   async createTicket(ticketData) {
     try {
-      // Validar datos requeridos
       this.validateTicketData(ticketData);
       
-      // Calcular el monto total
       const amount = ticketData.products.reduce((total, item) => {
         return total + (item.price * item.quantity);
       }, 0);
 
-      // Asegurar que cada producto tenga subtotal
       const products = ticketData.products.map(item => ({
         ...item,
         subtotal: item.price * item.quantity
@@ -161,7 +158,6 @@ class TicketRepository {
         throw new Error('Ticket no encontrado');
       }
 
-      // Si se proporciona email, verificar que sea el propietario
       if (userEmail && ticket.purchaser !== userEmail) {
         throw new Error('No tienes permisos para ver este ticket');
       }
@@ -251,7 +247,6 @@ class TicketRepository {
       }
     });
 
-    // Validar formato de email
     const emailRegex = /^\S+@\S+\.\S+$/;
     if (!emailRegex.test(data.purchaser)) {
       throw new Error('Formato de email inválido');

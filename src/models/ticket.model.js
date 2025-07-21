@@ -60,7 +60,6 @@ const ticketSchema = new mongoose.Schema({
 
 ticketSchema.index({ purchaser: 1 });
 ticketSchema.index({ purchase_datetime: -1 });
-ticketSchema.index({ code: 1 }, { unique: true });
 
 const Ticket = mongoose.model('Ticket', ticketSchema);
 

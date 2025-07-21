@@ -33,7 +33,7 @@ class UserRepository {
       if (!user) {
         return null;
       }
-      return user; // Retornamos el modelo completo para autenticación
+      return user; 
     } catch (error) {
       throw error;
     }
@@ -41,7 +41,6 @@ class UserRepository {
 
   async updateUser(id, updateData) {
     try {
-      // Validar que no se envíen campos sensibles
       const allowedFields = ['first_name', 'last_name', 'age'];
       const filteredData = {};
       
