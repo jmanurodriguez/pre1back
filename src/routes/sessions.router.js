@@ -3,8 +3,12 @@ import passport from 'passport';
 import jwt from 'jsonwebtoken';
 import User from '../models/user.model.js';
 import { isValidEmail } from '../utils/auth.js';
+import UserRepository from '../repositories/user.repository.js';
+import AuthService from '../services/auth.service.js';
 
 const router = Router();
+const userRepository = new UserRepository();
+const authService = new AuthService();
 const handlePassportError = (err, req, res, next) => {
     if (err) {
         return res.status(500).json({ 
@@ -15,8 +19,8 @@ const handlePassportError = (err, req, res, next) => {
     next();
 };
 
-router.post('/register', (req, res, next) => {
-    passport.authenticate('register', { session: false }, (err, user, info) => {
+router.post('/register', async (req, res, next) => {
+    passport.authenticate('register', { session: false }, async (err, user, info) => {
         if (err) {
             console.error('Error en registro:', err);
             return res.status(500).json({ 
@@ -30,6 +34,12 @@ router.post('/register', (req, res, next) => {
                 status: 'error', 
                 message: info?.message || 'Error en el registro' 
             });
+        }
+
+        try {
+            await authService.sendWelcomeEmail(user.email, user.first_name);
+        } catch (emailError) {
+            console.error('Error enviando email de bienvenida:', emailError);
         }
         
         res.status(201).json({ 
@@ -112,7 +122,7 @@ router.post('/login', (req, res, next) => {
     })(req, res, next);
 });
 
-router.get('/current', passport.authenticate('jwt', { session: false }), (req, res) => {
+router.get('/current', passport.authenticate('jwt', { session: false }), async (req, res) => {
     try {
         if (!req.user) {
             return res.status(401).json({ 
@@ -121,20 +131,13 @@ router.get('/current', passport.authenticate('jwt', { session: false }), (req, r
             });
         }
 
+        // Usar UserRepository para obtener datos seguros del usuario
+        const currentUserData = await userRepository.getCurrentUser(req.user);
+
         res.json({ 
             status: 'success', 
             message: 'Usuario autenticado',
-            payload: {
-                id: req.user._id,
-                first_name: req.user.first_name,
-                last_name: req.user.last_name,
-                email: req.user.email,
-                age: req.user.age,
-                role: req.user.role,
-                cart: req.user.cart,
-                createdAt: req.user.createdAt,
-                updatedAt: req.user.updatedAt
-            }
+            payload: currentUserData
         });
     } catch (error) {
         console.error('Error en /current:', error);
@@ -178,6 +181,152 @@ router.get('/profile', passport.authenticate('jwt', { session: false }), (req, r
         res.status(500).json({ 
             status: 'error', 
             message: 'Error interno del servidor' 
+        });
+    }
+});
+
+// Ruta para solicitar recuperación de contraseña
+router.post('/forgot-password', async (req, res) => {
+    try {
+        const { email } = req.body;
+
+        if (!email) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'El email es requerido'
+            });
+        }
+
+        if (!isValidEmail(email)) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Formato de email inválido'
+            });
+        }
+
+        const result = await authService.requestPasswordReset(email);
+
+        res.json({
+            status: 'success',
+            message: result.message
+        });
+    } catch (error) {
+        console.error('Error en forgot-password:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// Ruta para validar token de reset
+router.get('/validate-reset-token/:token', async (req, res) => {
+    try {
+        const { token } = req.params;
+
+        if (!token) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Token requerido'
+            });
+        }
+
+        const validation = await authService.validateResetToken(token);
+
+        if (!validation.valid) {
+            return res.status(400).json({
+                status: 'error',
+                message: validation.message
+            });
+        }
+
+        res.json({
+            status: 'success',
+            message: validation.message
+        });
+    } catch (error) {
+        console.error('Error en validate-reset-token:', error);
+        res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// Ruta para restablecer contraseña con token
+router.post('/reset-password', async (req, res) => {
+    try {
+        const { token, newPassword } = req.body;
+
+        if (!token || !newPassword) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Token y nueva contraseña son requeridos'
+            });
+        }
+
+        const result = await authService.resetPassword(token, newPassword);
+
+        res.json({
+            status: 'success',
+            message: result.message
+        });
+    } catch (error) {
+        console.error('Error en reset-password:', error);
+        
+        if (error.message.includes('Token inválido') || 
+            error.message.includes('misma contraseña') ||
+            error.message.includes('debe tener al menos')) {
+            return res.status(400).json({
+                status: 'error',
+                message: error.message
+            });
+        }
+
+        res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor'
+        });
+    }
+});
+
+// Ruta para cambiar contraseña (usuario autenticado)
+router.post('/change-password', passport.authenticate('current', { session: false }), async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Contraseña actual y nueva contraseña son requeridas'
+            });
+        }
+
+        const result = await authService.changePassword(
+            req.user._id,
+            currentPassword,
+            newPassword
+        );
+
+        res.json({
+            status: 'success',
+            message: result.message
+        });
+    } catch (error) {
+        console.error('Error en change-password:', error);
+        
+        if (error.message.includes('incorrecta') || 
+            error.message.includes('diferente') ||
+            error.message.includes('debe tener al menos')) {
+            return res.status(400).json({
+                status: 'error',
+                message: error.message
+            });
+        }
+
+        res.status(500).json({
+            status: 'error',
+            message: 'Error interno del servidor'
         });
     }
 });

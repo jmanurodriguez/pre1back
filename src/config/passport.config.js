@@ -4,10 +4,15 @@ import jwt from 'passport-jwt';
 import User from '../models/user.model.js';
 import Cart from '../models/cart.model.js';
 import { createHash, isValidPassword, isValidEmail, validatePassword } from '../utils/auth.js';
+import UserRepository from '../repositories/user.repository.js';
+import CartRepository from '../repositories/cart.repository.js';
 
 const LocalStrategy = local.Strategy;
 const JWTStrategy = jwt.Strategy;
 const ExtractJWT = jwt.ExtractJwt;
+
+const userRepository = new UserRepository();
+const cartRepository = new CartRepository();
 
 const initializePassport = () => {
     passport.use('register', new LocalStrategy(
@@ -117,6 +122,30 @@ const initializePassport = () => {
             } catch (error) {
                 console.error('Error en JWT strategy:', error);
                 return done(error);
+            }
+        }
+    ));
+
+    passport.use('current', new JWTStrategy(
+        {
+            jwtFromRequest: ExtractJWT.fromExtractors([cookieExtractor, ExtractJWT.fromAuthHeaderAsBearerToken()]),
+            secretOrKey: process.env.JWT_SECRET
+        },
+        async (jwt_payload, done) => {
+            try {
+                if (!jwt_payload.user || !jwt_payload.user._id) {
+                    return done(null, false, { message: 'Token inválido' });
+                }
+
+                const user = await userRepository.getUserById(jwt_payload.user._id);
+                if (user) {
+                    const fullUser = await User.findById(jwt_payload.user._id).populate('cart');
+                    return done(null, fullUser);
+                }
+                return done(null, false, { message: 'Usuario no encontrado' });
+            } catch (error) {
+                console.error('Error en estrategia current:', error);
+                return done(null, false, { message: 'Error de autenticación' });
             }
         }
     ));

@@ -1,130 +1,247 @@
 import { Router } from 'express';
-import Product from '../models/product.model.js';
+import ProductRepository from '../repositories/product.repository.js';
+import { authenticateCurrent, adminOnlyProducts, optionalAuth } from '../middlewares/auth.js';
 
 const router = Router();
+const productRepository = new ProductRepository();
 
-router.get('/', async (req, res) => {
+router.get('/', optionalAuth, async (req, res) => {
     try {
-        const { limit = 10, page = 1, sort, category, status } = req.query;
-
-        const filter = {};
-
-        if (category) {
-            filter.category = category;
-        }
-
-        if (status !== undefined) {
-            filter.status = status === 'true';
-        }
+        const { 
+            limit = 10, 
+            page = 1, 
+            sort, 
+            category, 
+            status,
+            minPrice,
+            maxPrice,
+            search 
+        } = req.query;
 
         const options = {
             page: parseInt(page),
             limit: parseInt(limit),
-            lean: true
+            category,
+            status: status !== undefined ? status === 'true' : undefined,
+            minPrice,
+            maxPrice,
+            search
         };
 
         if (sort) {
             options.sort = { price: sort === 'asc' ? 1 : -1 };
         }
 
-        const result = await Product.paginate(filter, options);
+        const isAdmin = req.user?.role === 'admin';
+        const result = await productRepository.getAllProducts(options, isAdmin);
+
+        const buildLink = (pageNum) => {
+            const params = new URLSearchParams();
+            params.append('page', pageNum);
+            params.append('limit', limit);
+            if (sort) params.append('sort', sort);
+            if (category) params.append('category', category);
+            if (status !== undefined) params.append('status', status);
+            if (minPrice) params.append('minPrice', minPrice);
+            if (maxPrice) params.append('maxPrice', maxPrice);
+            if (search) params.append('search', search);
+            return `/api/products?${params.toString()}`;
+        };
 
         res.json({
             status: 'success',
-            payload: result.docs,
-            totalPages: result.totalPages,
-            prevPage: result.prevPage,
-            nextPage: result.nextPage,
-            page: result.page,
-            hasPrevPage: result.hasPrevPage,
-            hasNextPage: result.hasNextPage,
-            prevLink: result.hasPrevPage ? `/api/products?page=${result.prevPage}&limit=${limit}${sort ? `&sort=${sort}` : ''}` : null,
-            nextLink: result.hasNextPage ? `/api/products?page=${result.nextPage}&limit=${limit}${sort ? `&sort=${sort}` : ''}` : null
+            payload: result.products,
+            totalPages: result.pagination.totalPages,
+            prevPage: result.pagination.prevPage,
+            nextPage: result.pagination.nextPage,
+            page: result.pagination.page,
+            hasPrevPage: result.pagination.hasPrevPage,
+            hasNextPage: result.pagination.hasNextPage,
+            prevLink: result.pagination.hasPrevPage ? buildLink(result.pagination.prevPage) : null,
+            nextLink: result.pagination.hasNextPage ? buildLink(result.pagination.nextPage) : null
         });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
     }
 });
 
-router.get('/:pid', async (req, res) => {
+router.get('/categories', async (req, res) => {
+    try {
+        const categories = await productRepository.getCategories();
+        res.json({
+            status: 'success',
+            payload: categories
+        });
+    } catch (error) {
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
+    }
+});
+
+router.get('/:pid', optionalAuth, async (req, res) => {
     try {
         const { pid } = req.params;
-        const product = await Product.findById(pid);
-
-        if (!product) {
-            return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
-        }
-
-        res.json({ status: 'success', payload: product });
+        const isAdmin = req.user?.role === 'admin';
+        
+        const product = await productRepository.getProductById(pid, isAdmin);
+        
+        res.json({ 
+            status: 'success', 
+            payload: product 
+        });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        if (error.message === 'Producto no encontrado') {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
     }
 });
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateCurrent, adminOnlyProducts, async (req, res) => {
     try {
-        const { title, description, code, price, status, stock, category, thumbnails } = req.body;
+        const { title, description, code, price, status, stock, category, thumbnails, tags } = req.body;
 
-        if (!title || !description || !code || !price || !stock || !category) {
-            return res.status(400).json({ status: 'error', message: 'Todos los campos son obligatorios' });
-        }
-
-        const existingProduct = await Product.findOne({ code });
-        if (existingProduct) {
-            return res.status(400).json({ status: 'error', message: `Ya existe un producto con el código ${code}` });
-        }
-
-        const newProduct = new Product({
+        const productData = {
             title,
             description,
             code,
-            price,
+            price: parseFloat(price),
             status: status ?? true,
-            stock,
+            stock: parseInt(stock),
             category,
-            thumbnails: thumbnails ?? []
+            thumbnail: thumbnails?.[0] || '',
+            tags: tags || []
+        };
+
+        const newProduct = await productRepository.createProduct(productData);
+        
+        res.status(201).json({ 
+            status: 'success', 
+            payload: newProduct,
+            message: 'Producto creado correctamente'
         });
-
-        await newProduct.save();
-        res.status(201).json({ status: 'success', payload: newProduct });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        if (error.message.includes('requerido') || 
+            error.message.includes('código') ||
+            error.message.includes('precio') ||
+            error.message.includes('stock')) {
+            return res.status(400).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
     }
 });
 
-router.put('/:pid', async (req, res) => {
+router.put('/:pid', authenticateCurrent, adminOnlyProducts, async (req, res) => {
     try {
         const { pid } = req.params;
-        const { id: _, ...update } = req.body;
+        const { id: _, ...updateData } = req.body;
 
-        const updatedProduct = await Product.findByIdAndUpdate(
-            pid,
-            update,
-            { new: true, runValidators: true }
-        );
-
-        if (!updatedProduct) {
-            return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
+        if (updateData.price) {
+            updateData.price = parseFloat(updateData.price);
+        }
+        if (updateData.stock !== undefined) {
+            updateData.stock = parseInt(updateData.stock);
         }
 
-        res.json({ status: 'success', payload: updatedProduct });
+        const updatedProduct = await productRepository.updateProduct(pid, updateData);
+        
+        res.json({ 
+            status: 'success', 
+            payload: updatedProduct,
+            message: 'Producto actualizado correctamente'
+        });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        if (error.message === 'Producto no encontrado') {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        if (error.message.includes('código') ||
+            error.message.includes('precio') ||
+            error.message.includes('stock')) {
+            return res.status(400).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
     }
 });
 
-router.delete('/:pid', async (req, res) => {
+router.delete('/:pid', authenticateCurrent, adminOnlyProducts, async (req, res) => {
     try {
         const { pid } = req.params;
-        const deletedProduct = await Product.findByIdAndDelete(pid);
+        const result = await productRepository.deleteProduct(pid);
+        
+        res.json({ 
+            status: 'success', 
+            message: result.message 
+        });
+    } catch (error) {
+        if (error.message === 'Producto no encontrado') {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
+    }
+});
 
-        if (!deletedProduct) {
-            return res.status(404).json({ status: 'error', message: 'Producto no encontrado' });
+router.patch('/:pid/stock', authenticateCurrent, adminOnlyProducts, async (req, res) => {
+    try {
+        const { pid } = req.params;
+        const { stock } = req.body;
+
+        if (stock === undefined || stock < 0) {
+            return res.status(400).json({
+                status: 'error',
+                message: 'Stock debe ser un número mayor o igual a 0'
+            });
         }
 
-        res.json({ status: 'success', message: 'Producto eliminado correctamente' });
+        const result = await productRepository.updateStock(pid, parseInt(stock));
+        
+        res.json({ 
+            status: 'success', 
+            payload: result,
+            message: 'Stock actualizado correctamente'
+        });
     } catch (error) {
-        res.status(500).json({ status: 'error', message: error.message });
+        if (error.message === 'Producto no encontrado') {
+            return res.status(404).json({ 
+                status: 'error', 
+                message: error.message 
+            });
+        }
+        res.status(500).json({ 
+            status: 'error', 
+            message: error.message 
+        });
     }
 });
 

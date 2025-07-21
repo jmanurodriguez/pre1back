@@ -10,6 +10,7 @@ import cartRouter from './routes/cart.router.js';
 import viewsRouter from './routes/views.router.js';
 import sessionsRouter from './routes/sessions.router.js';
 import usersRouter from './routes/users.router.js';
+import ticketsRouter from './routes/tickets.router.js';
 import Product from './models/product.model.js';
 import connectDB from './config/database.js';
 import initializePassport from './config/passport.config.js';
@@ -55,6 +56,7 @@ app.use('/api/products', productsRouter);
 app.use('/api/carts', cartRouter);
 app.use('/api/sessions', sessionsRouter);
 app.use('/api/users', usersRouter);
+app.use('/api/tickets', ticketsRouter);
 
 app.use('/', viewsRouter);
 
@@ -81,7 +83,10 @@ const httpServer = app.listen(PORT, () => {
     console.log(`- POST /api/sessions/register - Registrar usuario`);
     console.log(`- POST /api/sessions/login - Iniciar sesión`);
     console.log(`- GET  /api/sessions/current - Usuario actual (protegida)`);
+    console.log(`- POST /api/sessions/forgot-password - Recuperar contraseña`);
     console.log(`- GET  /api/users - CRUD usuarios (admin)`);
+    console.log(`- GET  /api/tickets - Obtener tickets`);
+    console.log(`- POST /api/carts/:cid/purchase - Procesar compra`);
 });
 
 const io = new Server(httpServer);

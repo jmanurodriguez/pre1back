@@ -1,5 +1,26 @@
 import passport from 'passport';
 
+export const authenticateCurrent = (req, res, next) => {
+    passport.authenticate('current', { session: false }, (err, user, info) => {
+        if (err) {
+            return res.status(500).json({ 
+                status: 'error', 
+                message: 'Error interno del servidor' 
+            });
+        }
+        
+        if (!user) {
+            return res.status(401).json({ 
+                status: 'error', 
+                message: info?.message || 'Token inválido o expirado. Por favor, inicia sesión nuevamente.' 
+            });
+        }
+        
+        req.user = user;
+        next();
+    })(req, res, next);
+};
+
 export const authenticateJWT = (req, res, next) => {
     passport.authenticate('jwt', { session: false }, (err, user, info) => {
         if (err) {
@@ -21,6 +42,42 @@ export const authenticateJWT = (req, res, next) => {
     })(req, res, next);
 };
 
+export const adminOnlyProducts = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            status: 'error', 
+            message: 'Autenticación requerida' 
+        });
+    }
+    
+    if (req.user.role !== 'admin') {
+        return res.status(403).json({ 
+            status: 'error', 
+            message: 'Acceso denegado. Solo los administradores pueden gestionar productos.' 
+        });
+    }
+    
+    next();
+};
+
+export const userOnlyCart = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            status: 'error', 
+            message: 'Autenticación requerida' 
+        });
+    }
+    
+    if (req.user.role !== 'user') {
+        return res.status(403).json({ 
+            status: 'error', 
+            message: 'Acceso denegado. Solo los usuarios pueden gestionar carritos.' 
+        });
+    }
+    
+    next();
+};
+
 export const isAdmin = (req, res, next) => {
     if (!req.user) {
         return res.status(401).json({ 
@@ -33,6 +90,24 @@ export const isAdmin = (req, res, next) => {
         return res.status(403).json({ 
             status: 'error', 
             message: 'Acceso denegado. Se requieren permisos de administrador.' 
+        });
+    }
+    
+    next();
+};
+
+export const isUser = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            status: 'error', 
+            message: 'No hay usuario autenticado' 
+        });
+    }
+    
+    if (req.user.role !== 'user') {
+        return res.status(403).json({ 
+            status: 'error', 
+            message: 'Acceso denegado. Solo usuarios pueden realizar esta acción.' 
         });
     }
     
@@ -79,6 +154,28 @@ export const isAdminOrOwner = (req, res, next) => {
     });
 };
 
+export const isOwnCart = (req, res, next) => {
+    if (!req.user) {
+        return res.status(401).json({ 
+            status: 'error', 
+            message: 'No hay usuario autenticado' 
+        });
+    }
+    
+    const cartId = req.params.cid || req.params.cartId;
+
+    if (req.user.cart?._id?.toString() !== cartId && 
+        req.user.cart?.toString() !== cartId && 
+        req.user.role !== 'admin') {
+        return res.status(403).json({ 
+            status: 'error', 
+            message: 'Acceso denegado. Solo puedes acceder a tu propio carrito.' 
+        });
+    }
+    
+    next();
+};
+
 export const requireRole = (roles) => {
     return (req, res, next) => {
         if (!req.user) {
@@ -100,10 +197,21 @@ export const requireRole = (roles) => {
 };
 
 export const optionalAuth = (req, res, next) => {
-    passport.authenticate('jwt', { session: false }, (err, user) => {
+    passport.authenticate('current', { session: false }, (err, user) => {
         if (user) {
             req.user = user;
         }
         next();
     })(req, res, next);
 };
+
+export const authAndRole = (roles) => {
+    return [
+        authenticateCurrent,
+        requireRole(roles)
+    ];
+};
+
+export const authenticateForProducts = [authenticateCurrent, adminOnlyProducts];
+
+export const authenticateForCart = [authenticateCurrent, userOnlyCart];
